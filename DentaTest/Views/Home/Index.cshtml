@@ -1,0 +1,16 @@
+﻿@model RequestModel
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+    <div class="text-center">
+        @if (TempData["message"] != null)
+        {
+            <div class="alert alert-success">@TempData["message"]</div>
+            }
+            <form asp-action="AddToQueue" method="post" class="input-group" enctype="multipart/form-data">
+                <input asp-for="Email" type="email" value="Введите email" required />
+                <input asp-for="Files" type="file" multiple required />
+                <input type="submit" />
+            </form>
+        </div>
