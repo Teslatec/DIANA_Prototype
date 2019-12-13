@@ -1,0 +1,11 @@
+version: '3.3'
+services:
+  cnn:
+    image: image-service-cnn
+    restart: always
+    volumes:
+      - "image-volume:/images"
+    ports:
+      - "8888:8888"
+volumes:
+  image-volume:
