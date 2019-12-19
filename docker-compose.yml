@@ -5,7 +5,16 @@ services:
     restart: always
     volumes:
       - "image-volume:/images"
+  denta:
+    image: image-service-denta
+    restart: always
+    volumes:
+      - "image-volume:/images"
     ports:
-      - "8888:8888"
+        - "80:80"
+    environment:
+      - ip=cnn
+      - port=8888
+      - image_dir=/images/
 volumes:
   image-volume:
