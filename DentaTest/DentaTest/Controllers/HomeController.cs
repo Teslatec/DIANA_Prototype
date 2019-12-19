@@ -45,6 +45,7 @@ namespace DentaTest.Controllers
 
         [HttpPost]
         //[ServiceFilter(typeof(EmailFilter))]
+        [RequestSizeLimit(52428800)]
         public async Task<IActionResult> AddToQueue(RequestModel requestModel)
         {
             if(!whiteList.WhiteList.Contains(requestModel.Email.ToLower()))
