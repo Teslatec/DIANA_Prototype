@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/home/anatole/ImageService/DentaTest/DentaTest.csproj": {}
+    "/home/anatole/ImageService/DentaTest/DentaTest/DentaTest.csproj": {}
   },
   "projects": {
-    "/home/anatole/ImageService/DentaTest/DentaTest.csproj": {
+    "/home/anatole/ImageService/DentaTest/DentaTest/DentaTest.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/anatole/ImageService/DentaTest/DentaTest.csproj",
+        "projectUniqueName": "/home/anatole/ImageService/DentaTest/DentaTest/DentaTest.csproj",
         "projectName": "DentaTest",
-        "projectPath": "/home/anatole/ImageService/DentaTest/DentaTest.csproj",
+        "projectPath": "/home/anatole/ImageService/DentaTest/DentaTest/DentaTest.csproj",
         "packagesPath": "/home/anatole/.nuget/packages/",
-        "outputPath": "/home/anatole/ImageService/DentaTest/obj/",
+        "outputPath": "/home/anatole/ImageService/DentaTest/DentaTest/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/anatole/.nuget/NuGet/NuGet.Config"

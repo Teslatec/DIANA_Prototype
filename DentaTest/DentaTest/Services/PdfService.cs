@@ -12,6 +12,8 @@ namespace DentaTest.Infrastructure
 {
     public static class PdfService
     {
+        private static readonly string _directory = Environment.GetEnvironmentVariable("image_dir");
+
         public static byte[] ConvertToPdf(IndexResponseModel model)
         {
             byte[] pdfBuffer = null;
@@ -25,13 +27,21 @@ namespace DentaTest.Infrastructure
                 //double y = 0;
                 foreach (var image in model.Images)
                 {
-                    var page = document.AddPage();
-                    using var gfx = XGraphics.FromPdfPage(page);
-                    using var xImage = XImage.FromFile(image.OutPath);
-                    double y = 100;
-                    double x = 100; // (250 - xImage.PixelWidth * 72 / xImage.HorizontalResolution) / 2;
-                    gfx.DrawImage(xImage, x, y);
-                    //y += xImage.PixelHeight + 10;
+                    string fullPath = _directory + image.OutPath;
+                    try
+                    {
+                        var page = document.AddPage();
+                        using var gfx = XGraphics.FromPdfPage(page);
+                        using var xImage = XImage.FromFile(fullPath);
+                        double y = 100;
+                        double x = 100; // (250 - xImage.PixelWidth * 72 / xImage.HorizontalResolution) / 2;
+                        gfx.DrawImage(xImage, x, y);
+                        //y += xImage.PixelHeight + 10;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex);
+                    }
                 }
                 //Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
                 document.Save(stream, false);
