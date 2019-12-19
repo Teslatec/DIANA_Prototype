@@ -33,10 +33,35 @@ namespace DentaTest.Infrastructure
                         var page = document.AddPage();
                         using var gfx = XGraphics.FromPdfPage(page);
                         using var xImage = XImage.FromFile(fullPath);
-                        double y = 100;
-                        double x = 100; // (250 - xImage.PixelWidth * 72 / xImage.HorizontalResolution) / 2;
-                        gfx.DrawImage(xImage, x, y);
-                        //y += xImage.PixelHeight + 10;
+                        double margin = 50;
+
+                        double maxW = page.Width - 2 * margin;
+                        double maxH = page.Height - 2 * margin;
+
+                        double w = xImage.PointWidth;
+                        double h = xImage.PointHeight;
+
+                        if (w <= maxW && h <= maxH)
+                        {
+                            /* Image fits inside the page, no resizing */
+                            double x = (page.Width - w) / 2;
+                            double y = (page.Height - h) / 2;
+                            gfx.DrawImage(xImage, x, y);
+                        }
+                        else
+                        {
+                            /* Image doesn't fit in a page, resize it */
+                            double xRatio = maxW / w;
+                            double yRatio = maxH / h;
+                            double scale =  Math.Min(xRatio, yRatio);
+                            double scaledW = w * scale;
+                            double scaledH = h * scale;
+
+                            double x = (page.Width - scaledW) / 2;
+                            double y = (page.Height - scaledH) / 2;
+
+                            gfx.DrawImage(xImage, x, y, scaledW, scaledH);
+                        }
                     }
                     catch (Exception ex)
                     {
