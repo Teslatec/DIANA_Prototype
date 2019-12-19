@@ -2,10 +2,11 @@ import tooth
 import socketserver
 import json
 import os
+import sys
 
 def process_request(model, workdir, json_object):
-    if not isinstance(json_object, list):
-        print("JSON object should be a list, got", type(json_object))
+    if not isinstance(json_object, dict):
+        print("JSON object should be a dict, got", type(json_object))
         return
 
     result = {}
@@ -15,12 +16,12 @@ def process_request(model, workdir, json_object):
     filenames_in = []
     filenames_out = []
 
-    for image_desc in json_object:
+    for image_desc in json_object["Images"]:
         if not isinstance(image_desc, dict):
             print("Image desc is not dict, but", type(image_desc))
             continue
 
-        filename = image_desc.get("filename", None)
+        filename = image_desc.get("Name", None)
         if filename is None:
             print("Missing filename property")
             continue
