@@ -26,33 +26,72 @@ namespace DentaTest.Infrastructure
                 document.Info.Author = "DIANA";
 
                 var section = document.AddSection();
+
                 
                 var header = section.Headers.Primary;
                 var logoImage = header.AddImage(Directory.GetCurrentDirectory() + "/" + "logo.png");
                 logoImage.LockAspectRatio = true;
                 logoImage.Height = "0.8382cm";
-                header.AddParagraph("Dental Index Analysis Application");
+                var paragraph = header.AddParagraph();
+                paragraph.AddFormattedText("Dental Index Analysis Application", new MigraDoc.DocumentObjectModel.Font("Verdana"));
 
-                var paragraph = section.AddParagraph();
-                var font = new MigraDoc.DocumentObjectModel.Font("Times New Roman", 16);
+                paragraph = section.AddParagraph();
+                var font = new MigraDoc.DocumentObjectModel.Font("Arial", 16);
                 font.Bold = true;
                 paragraph.Format.Alignment = MigraDoc.DocumentObjectModel.ParagraphAlignment.Center;
-                paragraph.AddFormattedText("Результаты расчёта", font);
+                paragraph.AddFormattedText("Результат расчёта", font);
+                paragraph.Format.SpaceBefore = 24.0;
+                paragraph.Format.SpaceAfter = 12.0;
 
-                paragraph = section.AddParagraph("Ф.И.О. пациента: ");
-                paragraph = section.AddParagraph("Ф.И.О. врача: ");
-                paragraph = section.AddParagraph("Дата приёма: ");
+                paragraph = section.AddParagraph();
+                paragraph.AddFormattedText("Ф.И.О. пациента: ");
+                paragraph.AddLineBreak();
+                paragraph.AddFormattedText("Ф.И.О. врача: ");
+                paragraph.AddLineBreak();
+                paragraph.AddFormattedText("Дата приёма: ");
+                paragraph.Format.LineSpacing = 12.0;
+                paragraph.Format.LineSpacingRule = MigraDoc.DocumentObjectModel.LineSpacingRule.Exactly;
+                paragraph.Format.SpaceAfter = 24.0;
 
                 paragraph = section.AddParagraph();
                 paragraph.Format.Shading.Color = MigraDoc.DocumentObjectModel.Colors.Yellow;
-                font = new MigraDoc.DocumentObjectModel.Font("Times New Roman", 12);
+                font = new MigraDoc.DocumentObjectModel.Font("Arial", 12);
                 font.Bold = true;
                 paragraph.AddFormattedText(
                         string.Format("Индекс гигиены полости рта: {0}%*",
                             (Math.Round(model.Dirtyness * 100.0))), font);
+                paragraph.Format.SpaceAfter = 12.0;
+
+                var table = section.AddTable();
+                for (int i = 0; i < 3; i++)
+                {
+                    var column = table.AddColumn();
+                }
+                table.Columns[0].Width = 15;
+                table.Columns[2].Width = 500;
+                MigraDoc.DocumentObjectModel.Tables.Row row = null;
+                row = table.AddRow();
+                paragraph = row.Cells[0].AddParagraph("*");
+                paragraph = row.Cells[1].AddParagraph("0%-24%");
+                paragraph.Format.Shading.Color = MigraDoc.DocumentObjectModel.Colors.LightGreen;
+                row.Cells[2].AddParagraph("гигиена хорошая;");
+                row = table.AddRow();
+                paragraph = row.Cells[1].AddParagraph("25%-49%");
+                paragraph.Format.Shading.Color = MigraDoc.DocumentObjectModel.Colors.Cyan;
+                row.Cells[2].AddParagraph("гигиена удовлетворительная;");
+                row = table.AddRow();
+                paragraph = row.Cells[1].AddParagraph("50%-74%");
+                paragraph.Format.Shading.Color = MigraDoc.DocumentObjectModel.Colors.Yellow;
+                row.Cells[2].AddParagraph("гигиена неудовлетворительная;");
+                row = table.AddRow();
+                paragraph = row.Cells[1].AddParagraph("75%-100%");
+                paragraph.Format.Shading.Color = MigraDoc.DocumentObjectModel.Colors.Red;
+                row.Cells[2].AddParagraph("гигиена плохая,");
 
                 paragraph = section.AddParagraph();
-                paragraph.AddFormattedText("Фотопротокол полости рта");
+                paragraph.AddFormattedText("Фотопротокол полости рта:");
+                paragraph.Format.SpaceBefore = 12.0;
+                paragraph.Format.SpaceAfter = 12.0;
 
                 var nColumns = 3;
 
@@ -61,30 +100,50 @@ namespace DentaTest.Infrastructure
                                      document.DefaultPageSetup.RightMargin;
 
                 float columnWidth = sectionWidth / nColumns;
-                var table = section.AddTable();
-                for (int i = 0; i < nColumns; i++) {
+                table = section.AddTable();
+                for (int i = 0; i < nColumns; i++)
+                {
                     var column = table.AddColumn();
                     column.Width = columnWidth;
                 }
 
                 var imagesDrawn = 0;
-                MigraDoc.DocumentObjectModel.Tables.Row row = null;
+                row = null;
                 foreach (var image in model.Images)
                 {
                     var columnIndex = imagesDrawn % nColumns;
                     if (columnIndex == 0)
                     {
                         row = table.AddRow();
+                        row.Height = 100;
                     }
                     string fullPath = _directory + image.OutPath;
                     
                     var pdfImage = row.Cells[columnIndex].AddImage(fullPath);
+                    pdfImage.Borders.Width = 0.5;
                     Console.WriteLine("Added an image " + fullPath);
                     pdfImage.LockAspectRatio = true;
                     pdfImage.Width = "5.0cm";
                     imagesDrawn++;
                 }
                 
+                paragraph = section.AddParagraph();
+                paragraph.Format.SpaceBefore = 12.0;
+                paragraph.AddFormattedText("Рекомендации:");
+
+                for (int i = 0; i < 5; i++)
+                {
+                    paragraph = section.AddParagraph();
+                    paragraph.Format.Alignment = MigraDoc.DocumentObjectModel.ParagraphAlignment.Center;
+                    //...any other formats needed
+                    paragraph.Format.Borders.Bottom = new MigraDoc.DocumentObjectModel.Border()
+                    {
+                        Width = "1pt",
+                        Color = MigraDoc.DocumentObjectModel.Colors.DarkGray
+                    };
+                    paragraph.Format.SpaceBefore = 12.0;
+                }
+
                 var renderer = new MigraDoc.Rendering.PdfDocumentRenderer(true, PdfSharp.Pdf.PdfFontEmbedding.Always);
                 renderer.Document = document;
                 try
@@ -106,6 +165,7 @@ namespace DentaTest.Infrastructure
                 Console.WriteLine("Something bad happened");
                 Console.WriteLine(e);
             }
+            Console.WriteLine("Created PDF document with size " + pdfBuffer.Length);
             return pdfBuffer;
         }
 
