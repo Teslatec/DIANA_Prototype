@@ -17,61 +17,93 @@ namespace DentaTest.Infrastructure
         public static byte[] ConvertToPdf(IndexResponseModel model)
         {
             byte[] pdfBuffer = null;
+            try {
             using (var stream = new MemoryStream())
             {
-                using var document = new PdfDocument();
-                //var page = document.AddPage();
-                //using var gfx = XGraphics.FromPdfPage(page);
-                //gfx.MUH = PdfFontEncoding.Unicode;
-                //InsertLogo(gfx, null);
-                //double y = 0;
+                var document = new MigraDoc.DocumentObjectModel.Document();
+                document.Info.Title = "Dental index";
+                document.Info.Subject = "";
+                document.Info.Author = "DIANA";
+
+                var style = document.Styles["Heading1"];
+                style.Font.Name = "Times New Roman";
+                style.Font.Size = 16;
+                style.Font.Bold = true;
+
+                var section = document.AddSection();
+
+                var paragraph = section.AddParagraph();
+                var font = new MigraDoc.DocumentObjectModel.Font("Times New Roman", 16);
+                font.Bold = true;
+                paragraph.Format.Alignment = MigraDoc.DocumentObjectModel.ParagraphAlignment.Center;
+                paragraph.AddFormattedText("Результаты расчёта", font);
+
+                paragraph = section.AddParagraph("Ф.И.О. пациента: ");
+                paragraph = section.AddParagraph("Ф.И.О. врача: ");
+                paragraph = section.AddParagraph("Дата приёма: ");
+
+                paragraph = section.AddParagraph();
+                paragraph.Format.Shading.Color = MigraDoc.DocumentObjectModel.Colors.Yellow;
+                font = new MigraDoc.DocumentObjectModel.Font("Times New Roman", 12);
+                font.Bold = true;
+                paragraph.AddFormattedText(
+                        string.Format("Индекс гигиены полости рта: {0}%*",
+                            (Math.Round(model.Dirtyness * 100.0))), font);
+
+                paragraph = section.AddParagraph();
+                paragraph.AddFormattedText("Фотопротокол полости рта");
+
+                var nColumns = 3;
+
+                float sectionWidth = document.DefaultPageSetup.PageWidth -
+                                     document.DefaultPageSetup.LeftMargin -
+                                     document.DefaultPageSetup.RightMargin;
+
+                float columnWidth = sectionWidth / nColumns;
+                var table = section.AddTable();
+                for (int i = 0; i < nColumns; i++) {
+                    var column = table.AddColumn();
+                    column.Width = columnWidth;
+                }
+
+                var imagesDrawn = 0;
+                MigraDoc.DocumentObjectModel.Tables.Row row = null;
                 foreach (var image in model.Images)
                 {
+                    var columnIndex = imagesDrawn % nColumns;
+                    if (columnIndex == 0)
+                    {
+                        row = table.AddRow();
+                    }
                     string fullPath = _directory + image.OutPath;
-                    try
-                    {
-                        var page = document.AddPage();
-                        using var gfx = XGraphics.FromPdfPage(page);
-                        using var xImage = XImage.FromFile(fullPath);
-                        double margin = 50;
-
-                        double maxW = page.Width - 2 * margin;
-                        double maxH = page.Height - 2 * margin;
-
-                        double w = xImage.PointWidth;
-                        double h = xImage.PointHeight;
-
-                        if (w <= maxW && h <= maxH)
-                        {
-                            /* Image fits inside the page, no resizing */
-                            double x = (page.Width - w) / 2;
-                            double y = (page.Height - h) / 2;
-                            gfx.DrawImage(xImage, x, y);
-                        }
-                        else
-                        {
-                            /* Image doesn't fit in a page, resize it */
-                            double xRatio = maxW / w;
-                            double yRatio = maxH / h;
-                            double scale =  Math.Min(xRatio, yRatio);
-                            double scaledW = w * scale;
-                            double scaledH = h * scale;
-
-                            double x = (page.Width - scaledW) / 2;
-                            double y = (page.Height - scaledH) / 2;
-
-                            gfx.DrawImage(xImage, x, y, scaledW, scaledH);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex);
-                    }
+                    
+                    var pdfImage = row.Cells[columnIndex].AddImage(fullPath);
+                    Console.WriteLine("Added an image " + fullPath);
+                    pdfImage.Width = "5.0cm";
+                    pdfImage.LockAspectRatio = true;
+                    imagesDrawn++;
                 }
-                //Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-                document.Save(stream, false);
-                document.Close();
+                
+                var renderer = new MigraDoc.Rendering.PdfDocumentRenderer(true, PdfSharp.Pdf.PdfFontEmbedding.Always);
+                renderer.Document = document;
+                try
+                {
+                    renderer.RenderDocument();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+
+                // Save the document...
+                renderer.PdfDocument.Save(stream, false);
                 pdfBuffer = stream.ToArray();
+            }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Something bad happened");
+                Console.WriteLine(e);
             }
             return pdfBuffer;
         }
