@@ -25,12 +25,13 @@ namespace DentaTest.Infrastructure
                 document.Info.Subject = "";
                 document.Info.Author = "DIANA";
 
-                var style = document.Styles["Heading1"];
-                style.Font.Name = "Times New Roman";
-                style.Font.Size = 16;
-                style.Font.Bold = true;
-
                 var section = document.AddSection();
+                
+                var header = section.Headers.Primary;
+                var logoImage = header.AddImage(Directory.GetCurrentDirectory() + "/" + "logo.png");
+                logoImage.LockAspectRatio = true;
+                logoImage.Height = "0.8382cm";
+                header.AddParagraph("Dental Index Analysis Application");
 
                 var paragraph = section.AddParagraph();
                 var font = new MigraDoc.DocumentObjectModel.Font("Times New Roman", 16);
@@ -79,8 +80,8 @@ namespace DentaTest.Infrastructure
                     
                     var pdfImage = row.Cells[columnIndex].AddImage(fullPath);
                     Console.WriteLine("Added an image " + fullPath);
-                    pdfImage.Width = "5.0cm";
                     pdfImage.LockAspectRatio = true;
+                    pdfImage.Width = "5.0cm";
                     imagesDrawn++;
                 }
                 
