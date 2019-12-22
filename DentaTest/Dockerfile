@@ -10,8 +10,11 @@ RUN echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula selec
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
                         libgdiplus \
-                        ttf-mscorefonts-installer
+                        ttf-mscorefonts-installer \
+                        fonts-crosextra-carlito \
+                        fonts-crosextra-caladea
 
-COPY DentaTest/bin/Release/netcoreapp3.0/publish  /app/
+COPY logo.png /app/
+COPY DentaTest/bin/Release/netcoreapp3.0/publish /app/
 CMD /app/DentaTest
 
