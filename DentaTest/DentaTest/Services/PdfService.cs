@@ -120,7 +120,6 @@ namespace DentaTest.Infrastructure
                     string fullPath = _directory + image.OutPath;
                     
                     var pdfImage = row.Cells[columnIndex].AddImage(fullPath);
-                    pdfImage.Borders.Width = 0.5;
                     Console.WriteLine("Added an image " + fullPath);
                     pdfImage.LockAspectRatio = true;
                     pdfImage.Width = "5.0cm";
