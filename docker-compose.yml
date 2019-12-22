@@ -16,5 +16,6 @@ services:
       - ip=cnn
       - port=8888
       - image_dir=/images/
+      - TZ
 volumes:
   image-volume:
