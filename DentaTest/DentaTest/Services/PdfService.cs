@@ -12,8 +12,6 @@ namespace DentaTest.Infrastructure
 {
     public static class PdfService
     {
-        private static readonly string _directory = Environment.GetEnvironmentVariable("image_dir");
-
         public static byte[] ConvertToPdf(IndexResponseModel model)
         {
             byte[] pdfBuffer = null;
@@ -48,18 +46,20 @@ namespace DentaTest.Infrastructure
                 paragraph.AddLineBreak();
                 paragraph.AddFormattedText("Ф.И.О. врача: ");
                 paragraph.AddLineBreak();
-                paragraph.AddFormattedText("Дата приёма: ");
+                paragraph.AddFormattedText("Дата и время приёма: " +
+                       System.DateTime.Now.ToString(new System.Globalization.CultureInfo("ru-RU")));
                 paragraph.Format.LineSpacing = 12.0;
                 paragraph.Format.LineSpacingRule = MigraDoc.DocumentObjectModel.LineSpacingRule.Exactly;
                 paragraph.Format.SpaceAfter = 24.0;
 
+                int hygieneIndex = (int)Math.Round(model.Dirtyness * 100.0);
                 paragraph = section.AddParagraph();
-                paragraph.Format.Shading.Color = MigraDoc.DocumentObjectModel.Colors.Yellow;
+                paragraph.Format.Shading.Color = hygieneIndexToColor(hygieneIndex);
                 font = new MigraDoc.DocumentObjectModel.Font("Arial", 12);
                 font.Bold = true;
                 paragraph.AddFormattedText(
                         string.Format("Индекс гигиены полости рта: {0}%*",
-                            (Math.Round(model.Dirtyness * 100.0))), font);
+                            hygieneIndex), font);
                 paragraph.Format.SpaceAfter = 12.0;
 
                 var table = section.AddTable();
@@ -72,20 +72,20 @@ namespace DentaTest.Infrastructure
                 MigraDoc.DocumentObjectModel.Tables.Row row = null;
                 row = table.AddRow();
                 paragraph = row.Cells[0].AddParagraph("*");
-                paragraph = row.Cells[1].AddParagraph("0%-24%");
-                paragraph.Format.Shading.Color = MigraDoc.DocumentObjectModel.Colors.LightGreen;
+                paragraph = row.Cells[1].AddParagraph(percentageRangeString(0));
+                paragraph.Format.Shading.Color = indexColors[0];
                 row.Cells[2].AddParagraph("гигиена хорошая;");
                 row = table.AddRow();
-                paragraph = row.Cells[1].AddParagraph("25%-49%");
-                paragraph.Format.Shading.Color = MigraDoc.DocumentObjectModel.Colors.Cyan;
+                paragraph = row.Cells[1].AddParagraph(percentageRangeString(1));
+                paragraph.Format.Shading.Color = indexColors[1];
                 row.Cells[2].AddParagraph("гигиена удовлетворительная;");
                 row = table.AddRow();
-                paragraph = row.Cells[1].AddParagraph("50%-74%");
-                paragraph.Format.Shading.Color = MigraDoc.DocumentObjectModel.Colors.Yellow;
+                paragraph = row.Cells[1].AddParagraph(percentageRangeString(2));
+                paragraph.Format.Shading.Color = indexColors[2];
                 row.Cells[2].AddParagraph("гигиена неудовлетворительная;");
                 row = table.AddRow();
-                paragraph = row.Cells[1].AddParagraph("75%-100%");
-                paragraph.Format.Shading.Color = MigraDoc.DocumentObjectModel.Colors.Red;
+                paragraph = row.Cells[1].AddParagraph(percentageRangeString(3));
+                paragraph.Format.Shading.Color = indexColors[3];
                 row.Cells[2].AddParagraph("гигиена плохая,");
 
                 paragraph = section.AddParagraph();
@@ -168,6 +168,37 @@ namespace DentaTest.Infrastructure
             return pdfBuffer;
         }
 
+        private static readonly string _directory = Environment.GetEnvironmentVariable("image_dir");
+
+        private static readonly MigraDoc.DocumentObjectModel.Color[] indexColors = new MigraDoc.DocumentObjectModel.Color[]
+        {
+            MigraDoc.DocumentObjectModel.Colors.ForestGreen,
+            MigraDoc.DocumentObjectModel.Colors.Cyan,
+            MigraDoc.DocumentObjectModel.Colors.Yellow,
+            MigraDoc.DocumentObjectModel.Colors.Red,
+        };
+        private static readonly int[] indexThresholds = new int[] {25, 50, 75};
+
+        /* index argument: index in indexThresholds array */
+        private static string percentageRangeString(int index) {
+            double low = index <= 0 ? 0 : indexThresholds[index - 1] - 1;
+            double high = index >= (indexThresholds.Length - 1) ? 
+                                    100 : indexThresholds[index];
+            return string.Format("{0}-{1}%", low, high);
+        }
+
+        private static MigraDoc.DocumentObjectModel.Color hygieneIndexToColor(int hygieneIndex) {
+            int i = 0;
+            while (i < indexThresholds.Length && indexThresholds[i] <= hygieneIndex) {
+                i++;
+            }
+            
+            if (i >= indexThresholds.Length) {
+                i = indexThresholds.Length - 1;
+            }
+
+            return indexColors[i];
+        }
         //private void InsertLogo(XGraphics gfx, string logoPath, PdfDocument doc)
         //{
         //    XRect rect = new XRect(new XPoint(), gfx.PageSize);
