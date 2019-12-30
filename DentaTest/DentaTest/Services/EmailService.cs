@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using MimeKit;
 using PdfSharp.Pdf;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,8 +22,9 @@ namespace DentaTest.Services
         private static readonly string _smtpPassword = 
             Environment.GetEnvironmentVariable("smtp_password") ?? "hxbplcxbeazbwzat";
         
-        public static async Task SendEmailAsync(string email, string subject, string message, byte[] pdf)
+        public static async Task<bool> SendEmailAsync(string email, string subject, string message, byte[] pdf, string requestId)
         {
+            Log.Information("Request ({0}): Sending email in {1}", requestId, nameof(SendEmailAsync));
             var emailMessage = new MimeMessage();
 
             emailMessage.From.Add(new MailboxAddress("DIANA - Dental Index Analysis Application", _smtpLogin));
@@ -36,16 +38,39 @@ namespace DentaTest.Services
             using var client = new SmtpClient();
             try
             {
+                Log.Information("Request ({0}): Try connect to smtp in {1}", requestId, nameof(SendEmailAsync));
                 await client.ConnectAsync(_smtpService, _smtpServicePort, false);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Request ({0}): Failed at connect to smtp in {1}", requestId, nameof(SendEmailAsync));
+                return false;
+            }
+
+            try
+            {
+                Log.Information("Request ({0}): Try authenticate to smtp in {1}", requestId, nameof(SendEmailAsync));
                 await client.AuthenticateAsync(_smtpLogin, _smtpPassword);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Request ({0}): Failed at authenticate to smtp in {1}", requestId, nameof(SendEmailAsync));
+                return false;
+            }
+
+            try
+            {
                 await client.SendAsync(emailMessage);
             }
             catch (Exception ex)
             {
-                throw new Exception(ex.Message);
+                Log.Error(ex, "Request ({0}): Failed at sending message to smtp in {1}", requestId, nameof(SendEmailAsync));
+                return false;
             }
 
             await client.DisconnectAsync(true);
+
+            return true;
         }
     }
 }

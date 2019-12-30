@@ -1,6 +1,7 @@
 ﻿using DentaTest.Models;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,159 +13,169 @@ namespace DentaTest.Infrastructure
 {
     public static class PdfService
     {
-        public static byte[] ConvertToPdf(IndexResponseModel model)
+        public static byte[] ConvertToPdf(IndexResponseModel model, string requestId)
         {
+            Log.Information("Request ({0}): Making PDF in {1}", requestId, nameof(ConvertToPdf));
             byte[] pdfBuffer = null;
-            try {
-            using (var stream = new MemoryStream())
+            try 
             {
-                var document = new MigraDoc.DocumentObjectModel.Document();
-                document.Info.Title = "Dental index";
-                document.Info.Subject = "";
-                document.Info.Author = "DIANA";
-
-                var section = document.AddSection();
-
-                
-                var header = section.Headers.Primary;
-                var logoImage = header.AddImage(Directory.GetCurrentDirectory() + "/" + "logo.png");
-                logoImage.LockAspectRatio = true;
-                logoImage.Height = "0.8382cm";
-                var paragraph = header.AddParagraph();
-                paragraph.AddFormattedText("Dental Index Analysis Application", new MigraDoc.DocumentObjectModel.Font("Verdana"));
-
-                paragraph = section.AddParagraph();
-                var font = new MigraDoc.DocumentObjectModel.Font("Arial", 16);
-                font.Bold = true;
-                paragraph.Format.Alignment = MigraDoc.DocumentObjectModel.ParagraphAlignment.Center;
-                paragraph.AddFormattedText("Результат расчёта", font);
-                paragraph.Format.SpaceBefore = 24.0;
-                paragraph.Format.SpaceAfter = 12.0;
-
-                paragraph = section.AddParagraph();
-                paragraph.AddFormattedText("Ф.И.О. пациента: ");
-                paragraph.AddLineBreak();
-                paragraph.AddFormattedText("Ф.И.О. врача: ");
-                paragraph.AddLineBreak();
-                paragraph.AddFormattedText("Дата и время приёма: " +
-                       System.DateTime.Now.ToString(new System.Globalization.CultureInfo("ru-RU")));
-                paragraph.Format.LineSpacing = 12.0;
-                paragraph.Format.LineSpacingRule = MigraDoc.DocumentObjectModel.LineSpacingRule.Exactly;
-                paragraph.Format.SpaceAfter = 24.0;
-
-                int hygieneIndex = (int)Math.Round(model.Dirtyness * 100.0);
-                paragraph = section.AddParagraph();
-                paragraph.Format.Shading.Color = hygieneIndexToColor(hygieneIndex);
-                font = new MigraDoc.DocumentObjectModel.Font("Arial", 12);
-                font.Bold = true;
-                paragraph.AddFormattedText(
-                        string.Format("Индекс гигиены полости рта: {0}%*",
-                            hygieneIndex), font);
-                paragraph.Format.SpaceAfter = 12.0;
-
-                var table = section.AddTable();
-                for (int i = 0; i < 3; i++)
+                using (var stream = new MemoryStream())
                 {
-                    var column = table.AddColumn();
-                }
-                table.Columns[0].Width = 15;
-                table.Columns[2].Width = 500;
-                MigraDoc.DocumentObjectModel.Tables.Row row = null;
-                row = table.AddRow();
-                paragraph = row.Cells[0].AddParagraph("*");
-                paragraph = row.Cells[1].AddParagraph(percentageRangeString(0));
-                paragraph.Format.Shading.Color = indexColors[0];
-                row.Cells[2].AddParagraph("гигиена хорошая;");
-                row = table.AddRow();
-                paragraph = row.Cells[1].AddParagraph(percentageRangeString(1));
-                paragraph.Format.Shading.Color = indexColors[1];
-                row.Cells[2].AddParagraph("гигиена удовлетворительная;");
-                row = table.AddRow();
-                paragraph = row.Cells[1].AddParagraph(percentageRangeString(2));
-                paragraph.Format.Shading.Color = indexColors[2];
-                row.Cells[2].AddParagraph("гигиена неудовлетворительная;");
-                row = table.AddRow();
-                paragraph = row.Cells[1].AddParagraph(percentageRangeString(3));
-                paragraph.Format.Shading.Color = indexColors[3];
-                row.Cells[2].AddParagraph("гигиена плохая,");
+                    var document = new MigraDoc.DocumentObjectModel.Document();
+                    document.Info.Title = "Dental index";
+                    document.Info.Subject = "";
+                    document.Info.Author = "DIANA";
 
-                paragraph = section.AddParagraph();
-                paragraph.AddFormattedText("Фотопротокол полости рта:");
-                paragraph.Format.SpaceBefore = 12.0;
-                paragraph.Format.SpaceAfter = 12.0;
+                    var section = document.AddSection();
 
-                var nColumns = 3;
-
-                float sectionWidth = document.DefaultPageSetup.PageWidth -
-                                     document.DefaultPageSetup.LeftMargin -
-                                     document.DefaultPageSetup.RightMargin;
-
-                float columnWidth = sectionWidth / nColumns;
-                table = section.AddTable();
-                for (int i = 0; i < nColumns; i++)
-                {
-                    var column = table.AddColumn();
-                    column.Width = columnWidth;
-                }
-
-                var imagesDrawn = 0;
-                row = null;
-                foreach (var image in model.Images)
-                {
-                    var columnIndex = imagesDrawn % nColumns;
-                    if (columnIndex == 0)
-                    {
-                        row = table.AddRow();
-                        row.Height = 100;
-                    }
-                    string fullPath = _directory + image.OutPath;
                     
-                    var pdfImage = row.Cells[columnIndex].AddImage(fullPath);
-                    Console.WriteLine("Added an image " + fullPath);
-                    pdfImage.LockAspectRatio = true;
-                    pdfImage.Width = "5.0cm";
-                    imagesDrawn++;
-                }
-                
-                paragraph = section.AddParagraph();
-                paragraph.Format.SpaceBefore = 12.0;
-                paragraph.AddFormattedText("Рекомендации:");
+                    var header = section.Headers.Primary;
+                    var logoImage = header.AddImage(Directory.GetCurrentDirectory() + "/" + "logo.png");
+                    logoImage.LockAspectRatio = true;
+                    logoImage.Height = "0.8382cm";
+                    var paragraph = header.AddParagraph();
+                    paragraph.AddFormattedText("Dental Index Analysis Application", new MigraDoc.DocumentObjectModel.Font("Verdana"));
 
-                for (int i = 0; i < 5; i++)
-                {
                     paragraph = section.AddParagraph();
+                    var font = new MigraDoc.DocumentObjectModel.Font("Arial", 16);
+                    font.Bold = true;
                     paragraph.Format.Alignment = MigraDoc.DocumentObjectModel.ParagraphAlignment.Center;
-                    //...any other formats needed
-                    paragraph.Format.Borders.Bottom = new MigraDoc.DocumentObjectModel.Border()
+                    paragraph.AddFormattedText("Результат расчёта", font);
+                    paragraph.Format.SpaceBefore = 24.0;
+                    paragraph.Format.SpaceAfter = 12.0;
+
+                    paragraph = section.AddParagraph();
+                    paragraph.AddFormattedText("Ф.И.О. пациента: ");
+                    paragraph.AddLineBreak();
+                    paragraph.AddFormattedText("Ф.И.О. врача: ");
+                    paragraph.AddLineBreak();
+                    paragraph.AddFormattedText("Дата и время приёма: " +
+                           System.DateTime.Now.ToString(new System.Globalization.CultureInfo("ru-RU")));
+                    paragraph.Format.LineSpacing = 12.0;
+                    paragraph.Format.LineSpacingRule = MigraDoc.DocumentObjectModel.LineSpacingRule.Exactly;
+                    paragraph.Format.SpaceAfter = 24.0;
+
+                    int hygieneIndex = (int)Math.Round(model.Dirtyness * 100.0);
+                    paragraph = section.AddParagraph();
+                    paragraph.Format.Shading.Color = hygieneIndexToColor(hygieneIndex);
+                    font = new MigraDoc.DocumentObjectModel.Font("Arial", 12);
+                    font.Bold = true;
+                    paragraph.AddFormattedText(
+                            string.Format("Индекс гигиены полости рта: {0}%*",
+                                hygieneIndex), font);
+                    paragraph.Format.SpaceAfter = 12.0;
+
+                    var table = section.AddTable();
+                    for (int i = 0; i < 3; i++)
                     {
-                        Width = "1pt",
-                        Color = MigraDoc.DocumentObjectModel.Colors.DarkGray
-                    };
+                        var column = table.AddColumn();
+                    }
+                    table.Columns[0].Width = 15;
+                    table.Columns[2].Width = 500;
+                    MigraDoc.DocumentObjectModel.Tables.Row row = null;
+                    row = table.AddRow();
+                    paragraph = row.Cells[0].AddParagraph("*");
+                    paragraph = row.Cells[1].AddParagraph(percentageRangeString(0));
+                    paragraph.Format.Shading.Color = indexColors[0];
+                    row.Cells[2].AddParagraph("гигиена хорошая;");
+                    row = table.AddRow();
+                    paragraph = row.Cells[1].AddParagraph(percentageRangeString(1));
+                    paragraph.Format.Shading.Color = indexColors[1];
+                    row.Cells[2].AddParagraph("гигиена удовлетворительная;");
+                    row = table.AddRow();
+                    paragraph = row.Cells[1].AddParagraph(percentageRangeString(2));
+                    paragraph.Format.Shading.Color = indexColors[2];
+                    row.Cells[2].AddParagraph("гигиена неудовлетворительная;");
+                    row = table.AddRow();
+                    paragraph = row.Cells[1].AddParagraph(percentageRangeString(3));
+                    paragraph.Format.Shading.Color = indexColors[3];
+                    row.Cells[2].AddParagraph("гигиена плохая,");
+
+                    paragraph = section.AddParagraph();
+                    paragraph.AddFormattedText("Фотопротокол полости рта:");
                     paragraph.Format.SpaceBefore = 12.0;
-                }
+                    paragraph.Format.SpaceAfter = 12.0;
 
-                var renderer = new MigraDoc.Rendering.PdfDocumentRenderer(true, PdfSharp.Pdf.PdfFontEmbedding.Always);
-                renderer.Document = document;
-                try
-                {
-                    renderer.RenderDocument();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                }
+                    var nColumns = 3;
 
-                // Save the document...
-                renderer.PdfDocument.Save(stream, false);
-                pdfBuffer = stream.ToArray();
+                    float sectionWidth = document.DefaultPageSetup.PageWidth -
+                                         document.DefaultPageSetup.LeftMargin -
+                                         document.DefaultPageSetup.RightMargin;
+
+                    float columnWidth = sectionWidth / nColumns;
+                    table = section.AddTable();
+                    for (int i = 0; i < nColumns; i++)
+                    {
+                        var column = table.AddColumn();
+                        column.Width = columnWidth;
+                    }
+
+                    var imagesDrawn = 0;
+                    row = null;
+                    foreach (var image in model.Images)
+                    {
+                        var columnIndex = imagesDrawn % nColumns;
+                        if (columnIndex == 0)
+                        {
+                            row = table.AddRow();
+                            row.Height = 100;
+                        }
+                        string fullPath = _directory + image.OutPath;
+                        
+                        var pdfImage = row.Cells[columnIndex].AddImage(fullPath);
+                        Console.WriteLine("Added an image " + fullPath);
+                        pdfImage.LockAspectRatio = true;
+                        pdfImage.Width = "5.0cm";
+                        imagesDrawn++;
+                    }
+                    
+                    paragraph = section.AddParagraph();
+                    paragraph.Format.SpaceBefore = 12.0;
+                    paragraph.AddFormattedText("Рекомендации:");
+
+                    for (int i = 0; i < 5; i++)
+                    {
+                        paragraph = section.AddParagraph();
+                        paragraph.Format.Alignment = MigraDoc.DocumentObjectModel.ParagraphAlignment.Center;
+                        //...any other formats needed
+                        paragraph.Format.Borders.Bottom = new MigraDoc.DocumentObjectModel.Border()
+                        {
+                            Width = "1pt",
+                            Color = MigraDoc.DocumentObjectModel.Colors.DarkGray
+                        };
+                        paragraph.Format.SpaceBefore = 12.0;
+                    }
+
+                    var renderer = new MigraDoc.Rendering.PdfDocumentRenderer(true, PdfSharp.Pdf.PdfFontEmbedding.Always);
+                    renderer.Document = document;
+                    try
+                    {
+                        Log.Information("Request ({0}): Rendering PDF in {1}", requestId, nameof(ConvertToPdf));
+                        renderer.RenderDocument();
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "Request ({0}): Failed at render PDF in {1}", requestId, nameof(ConvertToPdf));
+                        return null;
+                    }
+                    finally
+                    {
+                        stream.Close();
+                        stream.Dispose();
+                    }
+
+                    // Save the document...
+                    renderer.PdfDocument.Save(stream, false);
+                    pdfBuffer = stream.ToArray();
+                }
             }
-            }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Console.WriteLine("Something bad happened");
-                Console.WriteLine(e);
+                Log.Error(ex, "Request ({0}): Fail at making PDF in {1}", requestId, nameof(ConvertToPdf));
+                return null;
             }
-            Console.WriteLine("Created PDF document with size " + pdfBuffer.Length);
+
+            Log.Information("Request ({0}): Created PDF document with size {1} in {2}", requestId, pdfBuffer.Length, nameof(ConvertToPdf));
             return pdfBuffer;
         }
 
@@ -199,26 +210,5 @@ namespace DentaTest.Infrastructure
 
             return indexColors[i];
         }
-        //private void InsertLogo(XGraphics gfx, string logoPath, PdfDocument doc)
-        //{
-        //    XRect rect = new XRect(new XPoint(), gfx.PageSize);
-        //    rect.Inflate(-10, -15);
-        //    XFont font = new XFont("Arial", 8, XFontStyle.Regular);
-        //    gfx.DrawString("Dental Index Analysis Application", font, XBrushes.Black, rect, XStringFormats.TopRight);
-            
-        //    rect.Offset(0, 5);
-        //    font = new XFont("Verdana", 8, XFontStyle.Italic);
-        //    XStringFormat format = new XStringFormat();
-        //    format.Alignment = XStringAlignment.Near;
-        //    format.LineAlignment = XLineAlignment.Far;
-        //    gfx.DrawString("Created with " + PdfSharp.ProductVersionInfo.Producer, font, XBrushes.DarkOrchid, rect, format);
-
-        //    font = new XFont("Verdana", 8);
-        //    format.Alignment = XStringAlignment.Center;
-        //    gfx.DrawString(Program.s_document.PageCount.ToString(), font, XBrushes.DarkOrchid, rect, format);
-
-        //    doc.Outlines.Add(title, page, true);
-        //}
-        
     }
 }

@@ -15,45 +15,38 @@ using PdfSharp.Pdf;
 using PdfSharp.Drawing;
 using DentaTest.Services;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace DentaTest.Infrastructure
 {
     public class RequestPipelineHandler
     {
-        public async Task NewPipelineAsync(ImageRequestModel model)
+
+        public async Task NewPipelineAsync(ImageRequestModel model, string traceId)
         {
-
-            var index = await TcpConnectionService.TransformAsync(model);
-            var pdf = PdfService.ConvertToPdf(index);
-            await EmailService.SendEmailAsync(model.Email, "DIANA - Dental Index Analysis Application", index.Dirtyness.ToString(), pdf);
+            Log.Information("Request ({0}): Started new Pipiline in {1}", traceId, nameof(NewPipelineAsync));
+            var index = await TcpConnectionService.TransformAsync(model, traceId);
+            if (index == null)
+            {
+                Log.Error("Request ({0}): Pipiline ended without result in {1} because index is null", traceId, nameof(NewPipelineAsync));
+                return;
+            }
+            
+            var pdf = PdfService.ConvertToPdf(index, traceId);
+            if (pdf == null)
+            {
+                Log.Error("Request ({0}): Pipiline ended without result in {1} because pdf is null", traceId, nameof(NewPipelineAsync));
+                return;
+            }
+            
+            var result = await EmailService.SendEmailAsync(model.Email, "DIANA - Dental Index Analysis Application", index.Dirtyness.ToString(), pdf, traceId);
+            if (!result)
+            {
+                Log.Error("Request ({0}): Pipiline ended without result in {1} because error in email service", traceId, nameof(NewPipelineAsync));
+                return;
+            }
+            Log.Information("Request ({0}): Ended Pipiline sucsesfully in {1}", traceId, nameof(NewPipelineAsync));
         }
-
-        //public async Task<ImageRequestModel> TransformAsync(ImageRequestModel model, string ip, int port)
-        //{
-        //    using TcpClient client = new TcpClient(ip, port);
-        //    using NetworkStream stream = client.GetStream();
-        //    var str = JsonConvert.SerializeObject(model);
-        //    var enc = new UTF8Encoding(false, false);
-        //    var data = enc.GetBytes(str);
-        //    stream.Write(data, 0, data.Length);
-        //    do
-        //    {
-        //        await Task.Delay(1000);
-        //    } while (!stream.DataAvailable);
-
-        //    StringBuilder stringBuilder = new StringBuilder();
-        //    byte[] bytes = new byte[64];
-        //    int buffer = 0;
-
-        //    do
-        //    {
-        //        buffer = stream.Read(bytes, 0, bytes.Length);
-        //        stringBuilder.Append(enc.GetString(bytes, 0, buffer));
-        //    } while (stream.DataAvailable);
-
-        //    var output = JsonConvert.DeserializeObject<ImageRequestModel>(stringBuilder.ToString());
-
-        //    return output;
-        //}
     }
 }

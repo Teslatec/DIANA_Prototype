@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Hosting;
 using System.IO;
 using Microsoft.Extensions.Hosting;
 using System.Text;
+using Serilog;
 
 namespace DentaTest.Controllers
 {
@@ -48,13 +49,16 @@ namespace DentaTest.Controllers
         [RequestSizeLimit(52428800)]
         public async Task<IActionResult> AddToQueue(RequestModel requestModel)
         {
-            if(!whiteList.WhiteList.Contains(requestModel.Email.ToLower()))
+            Log.Information("{0}: New request started from {1}", HttpContext.TraceIdentifier, nameof(AddToQueue));
+            if (!ModelState.IsValid)
             {
-                TempData["message"] = "Email не зарегестрирован";
+                Log.Warning("Request: ({0}): Invalid Model ({1}) in {2}", HttpContext.TraceIdentifier, nameof(RequestModel), nameof(AddToQueue));
                 return View("Index");
             }
-            if(!ModelState.IsValid)
+            if (!whiteList.WhiteList.Contains(requestModel.Email.ToLower()))
             {
+                Log.Warning("Request ({0}): Invalid email in {1}", HttpContext.TraceIdentifier, nameof(AddToQueue));
+                TempData["message"] = "Email не зарегестрирован";
                 return View("Index");
             }
             var directory = Environment.GetEnvironmentVariable("image_dir") ?? $@"{environment.ContentRootPath}\FileRepository\";
@@ -71,14 +75,28 @@ namespace DentaTest.Controllers
                     var path = directory + name;
                     using (var stream = new FileStream(path, FileMode.Create))
                     {
-                        await file.CopyToAsync(stream);
+                        try
+                        {
+                            await file.CopyToAsync(stream);
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error(ex, "Request ({0}): failed to copy file ({1}) in {2}", HttpContext.TraceIdentifier, path, nameof(AddToQueue));
+                            TempData["message"] = "Возникла ошибка при обработки загруженных изображений";
+                            return View("Index");
+                        }
+                        finally
+                        {
+                            stream.Close();
+                            stream.Dispose();
+                        }
                     }
                     var fileModel = new ImageModel { Name = name, Path = path };
                     imgRequest.Images.Add(fileModel);
                 }
             }
-            backgroundQueue.QueueBackgroundWorkItem(async token => 
-                await new RequestPipelineHandler().NewPipelineAsync(imgRequest));
+            backgroundQueue.QueueBackgroundWorkItem(async token =>
+                await new RequestPipelineHandler().NewPipelineAsync(imgRequest, HttpContext.TraceIdentifier));
             return RedirectToAction("Index");
         }
 

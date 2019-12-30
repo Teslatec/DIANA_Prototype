@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace DentaTest.Models
 {
     public class ImageRequestModel
-    {
+    {       
         public int Id { get; set; }
 
         public string Email { get; set; }

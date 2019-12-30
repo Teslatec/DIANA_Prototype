@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Serilog;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,11 +25,13 @@ namespace DentaTest.Infrastructure
         {
             if (workItem == null)
             {
-                throw new ArgumentNullException(nameof(workItem));
+                Log.Error("Trying to queue null item in {0}", nameof(QueueBackgroundWorkItem));
             }
-
-            _workItems.Enqueue(workItem);
-            _signal.Release();
+            else
+            {
+                _workItems.Enqueue(workItem);
+                _signal.Release();
+            }
         }
 
         public async Task<Func<CancellationToken, Task>> DequeueAsync(CancellationToken cancellationToken)
