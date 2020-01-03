@@ -1,3 +1,9 @@
+FROM mcr.microsoft.com/dotnet/core/sdk:3.0 AS builder
+WORKDIR '/src'
+COPY DentaTest /src/DentaTest/
+COPY DentaTest.sln /src/
+RUN dotnet publish -c Release
+
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.0
 WORKDIR '/app'
 
@@ -15,6 +21,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
                         fonts-crosextra-caladea
 
 COPY logo.png /app/
-COPY DentaTest/bin/Release/netcoreapp3.0/publish /app/
+COPY --from=builder /src/DentaTest/bin/Release/netcoreapp3.0/publish /app/
 CMD /app/DentaTest
 
