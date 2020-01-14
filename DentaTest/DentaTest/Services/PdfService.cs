@@ -152,6 +152,8 @@ namespace DentaTest.Infrastructure
                     {
                         Log.Information("Request ({0}): Rendering PDF in {1}", requestId, nameof(ConvertToPdf));
                         renderer.RenderDocument();
+                        renderer.PdfDocument.Save(stream, false);
+                        pdfBuffer = stream.ToArray();
                     }
                     catch (Exception ex)
                     {
@@ -163,10 +165,6 @@ namespace DentaTest.Infrastructure
                         stream.Close();
                         stream.Dispose();
                     }
-
-                    // Save the document...
-                    renderer.PdfDocument.Save(stream, false);
-                    pdfBuffer = stream.ToArray();
                 }
             }
             catch (Exception ex)
