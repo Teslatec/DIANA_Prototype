@@ -95,7 +95,7 @@ def process_images(model, images):
         splashes.append(splash)
         all_dirtyness_lists_2d.append(dirtyness_list)
 
-    dirtyness = calculate_overall_dirtyness(all_dirtyness_lists_2d, 3)
+    dirtyness = calculate_overall_dirtyness(all_dirtyness_lists_2d, 0)
     return (splashes, dirtyness)
 
 def load_images(paths_in, paths_out):
