@@ -2,6 +2,8 @@ FROM mcr.microsoft.com/dotnet/core/sdk:3.0 AS builder
 WORKDIR '/src'
 COPY DentaTest /src/DentaTest/
 COPY DentaTest.sln /src/
+RUN dotnet remove DentaTest package PDFsharp; exit 0
+RUN dotnet remove DentaTest package PDFsharp-MigraDoc; exit 0
 RUN dotnet add DentaTest package Drive.MigraDocPdfSharp --version 1.0.0-preview2-1
 RUN dotnet publish -c Release
 
