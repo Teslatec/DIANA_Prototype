@@ -49,15 +49,16 @@ namespace DentaTest.Controllers
         [RequestSizeLimit(52428800)]
         public async Task<IActionResult> AddToQueue(RequestModel requestModel)
         {
-            Log.Information("{0}: New request started from {1}", HttpContext.TraceIdentifier, nameof(AddToQueue));
+            string traceId = HttpContext.TraceIdentifier;
+            Log.Information("{0}: New request started from {1}", traceId, nameof(AddToQueue));
             if (!ModelState.IsValid)
             {
-                Log.Warning("Request: ({0}): Invalid Model ({1}) in {2}", HttpContext.TraceIdentifier, nameof(RequestModel), nameof(AddToQueue));
+                Log.Warning("Request: ({0}): Invalid Model ({1}) in {2}", traceId, nameof(RequestModel), nameof(AddToQueue));
                 return View("Index");
             }
             if (!whiteList.WhiteList.Contains(requestModel.Email.ToLower()))
             {
-                Log.Warning("Request ({0}): Invalid email in {1}", HttpContext.TraceIdentifier, nameof(AddToQueue));
+                Log.Warning("Request ({0}): Invalid email in {1}", traceId, nameof(AddToQueue));
                 TempData["message"] = "Email не зарегестрирован";
                 return View("Index");
             }
@@ -81,7 +82,7 @@ namespace DentaTest.Controllers
                         }
                         catch (Exception ex)
                         {
-                            Log.Error(ex, "Request ({0}): failed to copy file ({1}) in {2}", HttpContext.TraceIdentifier, path, nameof(AddToQueue));
+                            Log.Error(ex, "Request ({0}): failed to copy file ({1}) in {2}", traceId, path, nameof(AddToQueue));
                             TempData["message"] = "Возникла ошибка при обработки загруженных изображений";
                             return View("Index");
                         }
@@ -96,7 +97,7 @@ namespace DentaTest.Controllers
                 }
             }
             backgroundQueue.QueueBackgroundWorkItem(async token =>
-                await new RequestPipelineHandler().NewPipelineAsync(imgRequest, HttpContext.TraceIdentifier));
+                await new RequestPipelineHandler().NewPipelineAsync(imgRequest, traceId));
             return RedirectToAction("Index");
         }
 
