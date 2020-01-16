@@ -7,18 +7,19 @@
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,600|Roboto&display=swap&subset=cyrillic" rel="stylesheet">
     <link rel="stylesheet" href="~/css/reset.css" />
     <link rel="stylesheet" href="~/css/site.css" />
+    <script src="~/js/site.js"></script>
 </head>
 <body>
     <header>
         <div class="headmain">
-            <a href="form.html" class="logo"></a>
+            <a asp-action="Index" class="logo"></a>
             <div class="cell m">
-                <a href="form.html">Как работает</a>
-                <a href="form.html">Контакты</a>
+                <a asp-action="Index">Как работает</a>
+                <a asp-action="Index">Контакты</a>
             </div>
             <div class="cell r">
-                <a href="form.html">info@indexdent.ru</a>
-                <a class="but" href="form.html"><p>Связаться с нами</p></a>
+                <a asp-action="Index">info@indexdent.ru</a>
+                <a class="but" asp-action="Index"><p>Связаться с нами</p></a>
             </div>
         </div>
     </header>
@@ -33,7 +34,7 @@
                 <p>© 2019 IT Компания IndexDent</p>
                 <p>Новосибирск, Академгородок.</p>
                 <p>info@indexdent.ru</p>
-                <a href="form.html">Условия предоставления услуг</a>
+                <a asp-action="Index">Условия предоставления услуг</a>
             </div>
         </div>
     </footer>

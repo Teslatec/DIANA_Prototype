@@ -9,11 +9,11 @@
             <h2>Легко и наглядно в 3 простых шага</h2>
             <form asp-action="AddToQueue" class="input-group" method="post" enctype="multipart/form-data">
                 <input asp-for="Email" type="email" placeholder="Введите email" value="" required />
-                <label for="files">
+                <label id="lab" for="files">
                     Выберите фотографии
-                    <input id="files" asp-for="Files" type="file" multiple required />
                 </label>
                 <button type="submit">Получить индекс гигиены</button>
+                <input id="files" asp-for="Files" type="file" onchange="countFiles()" accept=".jpg, .jpeg, .png" multiple required />
             </form>
         </div>
         <div class="right image">
