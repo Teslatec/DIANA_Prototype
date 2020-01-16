@@ -97,7 +97,7 @@ namespace DentaTest.Infrastructure
                     paragraph.AddFormattedText("гигиена удовлетворительная", fontSecond);
 
                     row = table.AddRow();
-                    paragraph = row.Cells[1].AddParagraph(percentageRangeString(2));
+                    paragraph = row.Cells[1].AddParagraph();
                     paragraph.AddFormattedText(percentageRangeString(2), fontSecond);
                     paragraph.Format.Shading.Color = indexColors[2];
                     
