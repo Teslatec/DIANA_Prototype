@@ -3,7 +3,30 @@
     ViewData["Title"] = "Home Page";
 }
 
-    <div class="text-center">
+    <section class="section-form">
+        <div class="mainform">
+            <h1>Помогаем сделать профилактику в стоматологии прибыльной</h1>
+            <h2>Легко и наглядно в 3 простых шага</h2>
+            <form asp-action="AddToQueue" class="input-group" method="post" enctype="multipart/form-data">
+                <input asp-for="Email" type="email" placeholder="Введите email" value="" required />
+                <label for="files">
+                    Выберите фотографии
+                    <input id="files" asp-for="Files" type="file" multiple required />
+                </label>
+                <button type="submit">Получить индекс гигиены</button>
+            </form>
+        </div>
+        <div class="right image">
+        </div>
+        <div class="widget">
+            <h1><strong>DIANA</strong> – искусственный интеллект, который определяет индекс гигиены полости рта</h1>
+        </div>
+    </section>    
+
+
+
+
+<!-- <div class="text-center">
         @if (TempData["message"] != null)
         {
             <div class="alert alert-success">@TempData["message"]</div>
@@ -14,3 +37,4 @@
                 <input type="submit" />
             </form>
         </div>
+-->

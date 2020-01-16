@@ -12,6 +12,13 @@ namespace DentaTest.Models
 
     public class WhiteListTempModel : IWhiteListModel
     {
-        public IQueryable<string> WhiteList { get; } = new List<string> { "lipranu@gmail.com", "an_romanov@teslatec.ru" }.AsQueryable();
+        public IQueryable<string> WhiteList { get; } = new List<string> 
+        {
+            "miata.v@gmail.com",
+            "vic9103@yandex.ru",
+            "ivan@teslatec.ru",
+            "lipranu@gmail.com", 
+            "an_romanov@teslatec.ru" 
+        }.AsQueryable();
     }
 }

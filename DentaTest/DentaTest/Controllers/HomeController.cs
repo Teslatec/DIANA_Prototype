@@ -98,6 +98,7 @@ namespace DentaTest.Controllers
             }
             backgroundQueue.QueueBackgroundWorkItem(async token =>
                 await new RequestPipelineHandler().NewPipelineAsync(imgRequest, traceId));
+
             return RedirectToAction("Index");
         }
 

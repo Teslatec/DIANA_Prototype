@@ -47,6 +47,7 @@ namespace DentaTest.Infrastructure
                 return;
             }
             Log.Information("Request ({0}): Ended Pipiline sucsesfully in {1}", traceId, nameof(NewPipelineAsync));
+            //return;
         }
     }
 }
