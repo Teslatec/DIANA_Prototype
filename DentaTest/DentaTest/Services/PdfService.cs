@@ -37,10 +37,11 @@ namespace DentaTest.Infrastructure
                     //paragraph.AddFormattedText("Dental Index Analysis Application", new MigraDoc.DocumentObjectModel.Font("Verdana"));
 
                     paragraph = section.AddParagraph();
-                    var font = new MigraDoc.DocumentObjectModel.Font("Arial", 16);
-                    font.Bold = true;
+                    var fontMain = new MigraDoc.DocumentObjectModel.Font("Arial", 18);
+                    fontMain.Bold = true;
+                    var fontSecond = new MigraDoc.DocumentObjectModel.Font("Arial", 16);
                     paragraph.Format.Alignment = MigraDoc.DocumentObjectModel.ParagraphAlignment.Center;
-                    paragraph.AddFormattedText("Результат расчёта", font);
+                    paragraph.AddFormattedText("Результат расчёта", fontMain);
                     paragraph.Format.SpaceBefore = 24.0;
                     paragraph.Format.SpaceAfter = 12.0;
 
@@ -49,9 +50,9 @@ namespace DentaTest.Infrastructure
                     //paragraph.AddLineBreak();
                     //paragraph.AddFormattedText("Ф.И.О. врача: ");
                     //paragraph.AddLineBreak();
-                    font.Bold = false;
+
                     paragraph.AddFormattedText("Дата и время приёма: " +
-                           System.DateTime.Now.ToString(new System.Globalization.CultureInfo("ru-RU")), font);
+                           System.DateTime.Now.ToString(new System.Globalization.CultureInfo("ru-RU")), fontSecond);
                     paragraph.Format.LineSpacing = 12.0;
                     paragraph.Format.LineSpacingRule = MigraDoc.DocumentObjectModel.LineSpacingRule.Exactly;
                     paragraph.Format.SpaceAfter = 24.0;
@@ -60,14 +61,13 @@ namespace DentaTest.Infrastructure
                     paragraph = section.AddParagraph();
                     paragraph.Format.Shading.Color = hygieneIndexToColor(hygieneIndex);
                     //font = new MigraDoc.DocumentObjectModel.Font("Arial", 16);
-                    font.Bold = true;
+
                     paragraph.AddFormattedText(
                             string.Format("Индекс гигиены полости рта: {0}%*",
-                                hygieneIndex), font);
+                                hygieneIndex), fontMain);
                     paragraph.Format.SpaceAfter = 12.0;
 
-                    font.Bold = false;
-                    paragraph.Format.Font = font;
+
                     var table = section.AddTable();
                     for (int i = 0; i < 3; i++)
                     {
@@ -76,26 +76,44 @@ namespace DentaTest.Infrastructure
                     table.Columns[0].Width = 15;
                     table.Columns[2].Width = 500;
                     MigraDoc.DocumentObjectModel.Tables.Row row = null;
+                    
                     row = table.AddRow();
-                    paragraph = row.Cells[0].AddParagraph("*");
-                    paragraph = row.Cells[1].AddParagraph(percentageRangeString(0));
+                    paragraph = row.Cells[0].AddParagraph();
+                    paragraph.AddFormattedText("*", fontSecond);
+
+                    paragraph = row.Cells[1].AddParagraph();
+                    paragraph.AddFormattedText(percentageRangeString(0), fontSecond);
                     paragraph.Format.Shading.Color = indexColors[0];
-                    row.Cells[2].AddParagraph("гигиена хорошая");
+                   
+                    paragraph = row.Cells[2].AddParagraph();
+                    paragraph.AddFormattedText("гигиена хорошая", fontSecond);
+                    
                     row = table.AddRow();
-                    paragraph = row.Cells[1].AddParagraph(percentageRangeString(1));
+                    paragraph = row.Cells[1].AddParagraph();
+                    paragraph.AddFormattedText(percentageRangeString(1), fontSecond);
                     paragraph.Format.Shading.Color = indexColors[1];
-                    row.Cells[2].AddParagraph("гигиена удовлетворительная");
+
+                    paragraph = row.Cells[2].AddParagraph();
+                    paragraph.AddFormattedText("гигиена удовлетворительная", fontSecond);
+
                     row = table.AddRow();
                     paragraph = row.Cells[1].AddParagraph(percentageRangeString(2));
+                    paragraph.AddFormattedText(percentageRangeString(2), fontSecond);
                     paragraph.Format.Shading.Color = indexColors[2];
-                    row.Cells[2].AddParagraph("гигиена неудовлетворительная");
+                    
+                    paragraph = row.Cells[2].AddParagraph();
+                    paragraph.AddFormattedText("гигиена неудовлетворительная", fontSecond);
+
                     row = table.AddRow();
-                    paragraph = row.Cells[1].AddParagraph(percentageRangeString(3));
+                    paragraph = row.Cells[1].AddParagraph();
+                    paragraph.AddFormattedText(percentageRangeString(3), fontSecond);
                     paragraph.Format.Shading.Color = indexColors[3];
-                    row.Cells[2].AddParagraph("гигиена плохая");
+
+                    paragraph = row.Cells[2].AddParagraph();
+                    paragraph.AddFormattedText("гигиена плохая", fontSecond);
 
                     paragraph = section.AddParagraph();
-                    paragraph.AddFormattedText("Фотопротокол полости рта:");
+                    paragraph.AddFormattedText("Фотопротокол полости рта:",fontSecond);
                     paragraph.Format.SpaceBefore = 12.0;
                     paragraph.Format.SpaceAfter = 12.0;
 
