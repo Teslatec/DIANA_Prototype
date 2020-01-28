@@ -5,7 +5,7 @@
 
     <section class="section-form">
         <div class="mainform">
-            <h1>Помогаем сделать профилактику в стоматологии прибыльной</h1>
+            <h1>Помогаем сделать профилактику в стоматологии точной и эффективной</h1>
             <h2>Легко и наглядно в 3 простых шага</h2>
             <form asp-action="AddToQueue" class="input-group" method="post" enctype="multipart/form-data">
                 <input asp-for="Email" type="email" placeholder="Введите email" value="" required />
@@ -14,6 +14,17 @@
                 </label>
                 <button type="submit">Получить индекс гигиены</button>
                 <input id="files" asp-for="Files" type="file" onchange="countFiles()" accept=".jpg, .jpeg, .png" multiple required />
+                @if (TempData["state"] != null)
+                {
+                    @if (TempData["state"] == "ok")
+                    {
+                        <p class="state ok" ok>Фотографии успешно отправлены</p>
+                    }
+                    @if (TempData["state"] == "warn")
+                    {
+                        <p class="state warn" ok>Ваш e-mail не зарегистрирован! Напишите нам info@indexdent.ru</p>
+                    }
+                }
             </form>
         </div>
         <div class="right image">
@@ -22,19 +33,3 @@
             <h1><strong>DIANA</strong> – искусственный интеллект, который определяет индекс гигиены полости рта</h1>
         </div>
     </section>    
-
-
-
-
-<!-- <div class="text-center">
-        @if (TempData["message"] != null)
-        {
-            <div class="alert alert-success">@TempData["message"]</div>
-            }
-            <form asp-action="AddToQueue" method="post" class="input-group" enctype="multipart/form-data">
-                <input asp-for="Email" type="email" value="Введите email" required />
-                <input asp-for="Files" type="file" multiple required />
-                <input type="submit" />
-            </form>
-        </div>
--->

@@ -50,7 +50,6 @@ namespace DentaTest.Infrastructure
                     //paragraph.AddLineBreak();
                     //paragraph.AddFormattedText("Ф.И.О. врача: ");
                     //paragraph.AddLineBreak();
-
                     paragraph.AddFormattedText("Дата и время приёма: " +
                            System.DateTime.Now.ToString(new System.Globalization.CultureInfo("ru-RU")), fontSecond);
                     paragraph.Format.LineSpacing = 12.0;

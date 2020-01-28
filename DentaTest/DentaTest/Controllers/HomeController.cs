@@ -59,7 +59,7 @@ namespace DentaTest.Controllers
             if (!whiteList.WhiteList.Contains(requestModel.Email.ToLower()))
             {
                 Log.Warning("Request ({0}): Invalid email in {1}", traceId, nameof(AddToQueue));
-                TempData["message"] = "Email не зарегестрирован";
+                TempData["state"] = "warn";
                 return View("Index");
             }
             var directory = Environment.GetEnvironmentVariable("image_dir") ?? $@"{environment.ContentRootPath}\FileRepository\";
@@ -83,7 +83,7 @@ namespace DentaTest.Controllers
                         catch (Exception ex)
                         {
                             Log.Error(ex, "Request ({0}): failed to copy file ({1}) in {2}", traceId, path, nameof(AddToQueue));
-                            TempData["message"] = "Возникла ошибка при обработки загруженных изображений";
+                            //TempData["message"] = "Возникла ошибка при обработки загруженных изображений";
                             return View("Index");
                         }
                         finally
@@ -98,8 +98,8 @@ namespace DentaTest.Controllers
             }
             backgroundQueue.QueueBackgroundWorkItem(async token =>
                 await new RequestPipelineHandler().NewPipelineAsync(imgRequest, traceId));
-
-            return RedirectToAction("Index");
+            TempData["state"] = "ok";
+            return View("Index");
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

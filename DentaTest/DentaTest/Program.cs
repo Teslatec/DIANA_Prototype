@@ -18,6 +18,7 @@ namespace DentaTest
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console()
+                //.WriteTo.Seq("http://localhost:5341")
                 .CreateLogger();
             try
             {
@@ -40,6 +41,7 @@ namespace DentaTest
             {
                 conf.AddCommandLine(args);
                 conf.AddEnvironmentVariables();
+                
             })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {

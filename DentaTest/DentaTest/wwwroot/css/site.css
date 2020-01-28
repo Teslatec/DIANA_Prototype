@@ -175,7 +175,7 @@ form {
 
 .mainform {
     float: left;
-    width: 70%;
+    width: 60%;
     height: 550px;
 }
 
@@ -275,6 +275,31 @@ input[type="file"] {
 label[for="files"] {
     text-align: center;
     cursor: pointer;
+}
+.state {
+    display: inline-block;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    margin-top: -28px;
+    margin-left: 0;
+    box-sizing: border-box;
+    width: 280px;
+    height: 70px;
+    padding: 4px;
+    border-radius: 10px;
+    color: white;
+    text-align: center;
+}
+
+.warn {
+    background-color: #ff8080;
+}
+
+.ok {
+    background-color: rgb( 43, 153, 91 );
+    padding: 16px;
+    height: 70px;
 }
 
 
