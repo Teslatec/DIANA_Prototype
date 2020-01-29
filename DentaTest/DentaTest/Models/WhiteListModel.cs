@@ -18,7 +18,12 @@ namespace DentaTest.Models
             "vic9103@yandex.ru",
             "ivan@teslatec.ru",
             "lipranu@gmail.com", 
-            "an_romanov@teslatec.ru" 
+            "an_romanov@teslatec.ru",
+            "dianadm1@dentmaster.ru",
+            "dianadm2@dentmaster.ru",
+            "dianadm3@dentmaster.ru",
+            "dianadm4@dentmaster.ru",
+            "dianadm@dentmaster.ru"
         }.AsQueryable();
     }
 }
