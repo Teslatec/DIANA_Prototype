@@ -83,7 +83,31 @@ def calculate_overall_dirtyness(all_dirtyness_lists_2d, n_outliers):
 
     return np.mean(dirtyness_list_total)
 
-def process_images(model, images):
+def save_tooth_images(source_image, masks, rois):
+    for i in range(masks.shape[2]):
+        tooth_image = source_image[rois[i][0]:rois[i][2], rois[i][1]:rois[i][3]]
+        tooth_mask = masks[rois[i][0]:rois[i][2], rois[i][1]:rois[i][3], i]
+
+        saved_image = np.ndarray((tooth_image.shape[0], tooth_image.shape[1], 4),
+                                 np.uint8)
+
+        for row in range(tooth_image.shape[0]):
+            for col in range(tooth_image.shape[1]):
+                if tooth_mask[row, col]:
+                    r, g, b = tooth_image[row, col]
+                    a = 255
+                else:
+                    r, g, b, a = 0, 255, 0, 0
+                saved_image[row, col] = r, g, b, a
+
+        directory = "/images/output/inspection/"
+        path = directory + str(i).zfill(2) + ".png"
+
+        skimage.io.imsave(path, saved_image, compress_level=1)
+        skimage.io.imsave(directory + "original.png", source_image, compress_level=1)
+            
+
+def process_images(model, images, inspect):
     all_dirtyness_lists_2d = []
     splashes = []
 
@@ -94,6 +118,9 @@ def process_images(model, images):
         dirtyness_list = calculate_every_dirtyness(image, r['masks'], r['rois'])
         splashes.append(splash)
         all_dirtyness_lists_2d.append(dirtyness_list)
+
+        if inspect:
+            save_tooth_images(image, r['masks'], r['rois']);
 
     dirtyness = calculate_overall_dirtyness(all_dirtyness_lists_2d, 0)
     return (splashes, dirtyness)
@@ -111,13 +138,13 @@ def load_images(paths_in, paths_out):
             print("Failed to read {}".format(path))
     return images, valid_paths_out
 
-def process_file_list(model, image_paths_in, image_paths_out):
+def process_file_list(model, image_paths_in, image_paths_out, inspect):
     images, image_paths_out = load_images(image_paths_in, image_paths_out)
     if len(images) == 0:
         print("No images to process")
         return None
 
-    splashes, dirtyness = process_images(model, images)
+    splashes, dirtyness = process_images(model, images, inspect)
     for splash, image_path_out in zip(splashes, image_paths_out):
         skimage.io.imsave(image_path_out, splash, compress_level=1)
     return dirtyness

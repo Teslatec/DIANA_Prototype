@@ -19,6 +19,7 @@ ENV PYTHONPATH /usr/local/src/Mask_RCNN
 COPY mask_rcnn_tooth_0030.h5 /app
 COPY tooth.py /app
 COPY tooth_service.py /app
+COPY tooth_cli.py /app
 
 VOLUME /images
 
