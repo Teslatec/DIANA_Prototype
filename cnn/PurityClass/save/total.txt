@@ -1,0 +1,1 @@
+{"view_item": 200.0, "S_cof": 1, "M_cof": 1, "H_cof": 1, "S": {"h_min": 290, "s_min": 90, "v_min": 0, "h_max": 360, "s_max": 255, "v_max": 255}, "M": {"h_min": 200, "s_min": 50, "v_min": 50, "h_max": 270, "s_max": 255, "v_max": 255}, "H": {"h_min": 125, "s_min": 30, "v_min": 0, "h_max": 214, "s_max": 255, "v_max": 255}, "S_Cof": 1.0, "M_Cof": 1.0, "H_Cof": 1.0}
