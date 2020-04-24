@@ -7,6 +7,9 @@ import os
 import sys
 import datetime
 
+sys.path.append("PurityClass")
+from purity_index import PurityIndex
+
 def apply_color_splash(image, mask, rois):
     """Apply color splash effect.
     image: RGB image [height, width, 3]
@@ -42,12 +45,13 @@ def calculate_tooth_dirtyness(image, mask):
                 all_count += 1
     return float(dirty_count) / float(all_count)
 
-def calculate_every_dirtyness(image, masks, rois):
+def calculate_every_dirtyness(configuration, image, masks, rois):
     dirtyness_list = []
     for i in range(masks.shape[2]):
         tooth_image = image[rois[i][0]:rois[i][2], rois[i][1]:rois[i][3]]
         tooth_mask = masks[rois[i][0]:rois[i][2], rois[i][1]:rois[i][3], i]
-        dirtyness = calculate_tooth_dirtyness(tooth_image, tooth_mask)
+        purity_class = PurityIndex(configuration)
+        dirtyness = purity_class.get_index(tooth_image, tooth_mask);
         dirtyness_list.append(dirtyness)
     return dirtyness_list
 
@@ -107,7 +111,7 @@ def save_tooth_images(source_image, masks, rois):
         skimage.io.imsave(directory + "original.png", source_image, compress_level=1)
             
 
-def process_images(model, images, inspect):
+def process_images(model, images, configuration, inspect):
     all_dirtyness_lists_2d = []
     splashes = []
 
@@ -115,7 +119,7 @@ def process_images(model, images, inspect):
         image = prepare_image(image)
         r = model.detect([image], verbose=0)[0]
         splash = apply_color_splash(image, r['masks'], r['rois'])
-        dirtyness_list = calculate_every_dirtyness(image, r['masks'], r['rois'])
+        dirtyness_list = calculate_every_dirtyness(configuration, image, r['masks'], r['rois'])
         splashes.append(splash)
         all_dirtyness_lists_2d.append(dirtyness_list)
 
@@ -131,6 +135,11 @@ def load_images(paths_in, paths_out):
     for (path_in, path_out) in zip(paths_in, paths_out):
         try:
             image = skimage.io.imread(path_in)
+
+            # Ignore alpha channel if it exists
+            if len(image.shape) == 3 and image.shape[2] == 4:
+                image = image[:,:,0:3]
+
             images.append(image)
             valid_paths_out.append(path_out)
         except:
@@ -138,13 +147,14 @@ def load_images(paths_in, paths_out):
             print("Failed to read {}".format(path))
     return images, valid_paths_out
 
-def process_file_list(model, image_paths_in, image_paths_out, inspect):
+def process_file_list(model, image_paths_in, image_paths_out,
+                      configuration, inspect):
     images, image_paths_out = load_images(image_paths_in, image_paths_out)
     if len(images) == 0:
         print("No images to process")
         return None
 
-    splashes, dirtyness = process_images(model, images, inspect)
+    splashes, dirtyness = process_images(model, images, configuration, inspect)
     for splash, image_path_out in zip(splashes, image_paths_out):
         skimage.io.imsave(image_path_out, splash, compress_level=1)
     return dirtyness
