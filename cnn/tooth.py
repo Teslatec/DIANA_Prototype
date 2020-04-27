@@ -1,14 +1,14 @@
 import mrcnn.model
 import mrcnn.config
 import mrcnn.visualize
+
+from purity_index import PurityIndex
+
 import numpy as np
 import skimage.draw
 import os
 import sys
 import datetime
-
-sys.path.append("PurityClass")
-from purity_index import PurityIndex
 
 def apply_color_splash(image, mask, rois):
     """Apply color splash effect.
@@ -148,7 +148,7 @@ def load_images(paths_in, paths_out):
     return images, valid_paths_out
 
 def process_file_list(model, image_paths_in, image_paths_out,
-                      configuration, inspect):
+                      configuration, inspect=False):
     images, image_paths_out = load_images(image_paths_in, image_paths_out)
     if len(images) == 0:
         print("No images to process")

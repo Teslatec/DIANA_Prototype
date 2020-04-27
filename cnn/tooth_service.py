@@ -3,10 +3,12 @@ import socketserver
 import json
 import os
 import sys
+import configparser
 
-def process_request(model, workdir, json_object):
+def process_request(model, purity_config, workdir, json_object):
     if not isinstance(json_object, dict):
         print("JSON object should be a dict, got", type(json_object))
+        sys.stdout.flush()
         return
 
     result = {}
@@ -19,15 +21,18 @@ def process_request(model, workdir, json_object):
     for image_desc in json_object["Images"]:
         if not isinstance(image_desc, dict):
             print("Image desc is not dict, but", type(image_desc))
+            sys.stdout.flush()
             continue
 
         filename = image_desc.get("Name", None)
         if filename is None:
             print("Missing filename property")
+            sys.stdout.flush()
             continue
 
         if "/" in filename or "\\" in filename or ".." in filename:
             print("Invalid filename \"{}\"".format(filename))
+            sys.stdout.flush()
             continue
 
         image_path_in = os.path.join(workdir, filename)
@@ -41,9 +46,12 @@ def process_request(model, workdir, json_object):
         filenames_in.append(filename)
         filenames_out.append(filename_out)
         print("Image path: ", image_path_in)
+        sys.stdout.flush()
 
-    dirtyness = tooth.process_file_list(model, image_paths_in, image_paths_out)
+    dirtyness = tooth.process_file_list(model, image_paths_in, image_paths_out,
+                                        purity_config)
     print("Dirtyness:", dirtyness)
+    sys.stdout.flush()
 
     return {
         "dirtyness": dirtyness,
@@ -54,6 +62,7 @@ def process_request(model, workdir, json_object):
 class TCPHandler(socketserver.BaseRequestHandler):
     def handle(self):
         model = self.server.model
+        purity_config = self.server.purity_config
         image_dir = self.server.image_dir
         json_object = None
         data = bytearray()
@@ -62,6 +71,7 @@ class TCPHandler(socketserver.BaseRequestHandler):
             new_data = self.request.recv(4096)
             if len(new_data) == 0:
                 print("Failed to parse JSON data")
+                sys.stdout.flush()
                 break
 
             data.extend(new_data)
@@ -72,20 +82,23 @@ class TCPHandler(socketserver.BaseRequestHandler):
             except ValueError:
                 continue
 
-        result = process_request(model, image_dir, json_object)
+        result = process_request(model, purity_config, image_dir, json_object)
         result_buf = json.dumps(result).encode()
         self.request.sendall(result_buf)
 
-def run_server(model, port, image_dir):
+def run_server(model, purity_config, port, image_dir):
     if not os.path.isdir(image_dir):
         print("\"{}\" is not a directory".format(image_dir))
+        sys.stdout.flush()
         return
 
     server = socketserver.TCPServer(('', port), TCPHandler)
     server.model = model
+    server.purity_config = purity_config
     server.image_dir = image_dir
 
     print("Listening TCP port {}".format(port))
+    sys.stdout.flush()
     server.serve_forever()
 
 if __name__ == '__main__':
@@ -97,6 +110,9 @@ if __name__ == '__main__':
     parser.add_argument('--weights', required=True,
                         metavar="/path/to/weights.h5",
                         help="Path to weights .h5 file or 'coco'")
+    parser.add_argument("--purity", required=True,
+                        metavar="/path/to/purity.ini",
+                        help="Path to PurityClass settings")
     parser.add_argument('--image', required=True,
                         metavar="path or URL to image",
                         help='Image to apply the color splash effect on')
@@ -106,4 +122,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     model = tooth.tooth_model_init(args.weights)
-    run_server(model, image_dir=args.image, port=8888)
+
+    purity_config = configparser.ConfigParser()
+    purity_config.read(args.purity)
+
+    run_server(model, purity_config, image_dir=args.image, port=8888)

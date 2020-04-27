@@ -29,9 +29,10 @@ COPY mask_rcnn_tooth_0030.h5 /app
 COPY tooth.py /app
 COPY tooth_service.py /app
 COPY tooth_cli.py /app
-COPY PurityClass /app/PurityClass
+COPY purity_index.py /app
 
 VOLUME /images
+VOLUME /app/config
 
 CMD python3 /app/tooth_service.py --weights=/app/mask_rcnn_tooth_0030.h5 \
-    --image=/images/
+    --image=/images/ --purity /app/config/purity.ini
