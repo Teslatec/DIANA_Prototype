@@ -109,7 +109,16 @@ def save_tooth_images(source_image, masks, rois):
 
         skimage.io.imsave(path, saved_image, compress_level=1)
         skimage.io.imsave(directory + "original.png", source_image, compress_level=1)
-            
+
+
+def cut_braces_from_teeth(tooth_masks, brace_masks):
+    result = np.copy(tooth_masks)
+
+    for t in range(tooth_masks.shape[-1]):
+        for b in range(brace_masks.shape[-1]):
+            result[:,:,t] = np.logical_and(result[:,:,t],
+                                           np.logical_not(brace_masks[:,:,b]))
+    return result
 
 def process_images(model, images, configuration, inspect):
     all_dirtyness_lists_2d = []
@@ -117,14 +126,19 @@ def process_images(model, images, configuration, inspect):
 
     for image in images:
         image = prepare_image(image)
-        r = model.detect([image], verbose=0)[0]
-        splash = apply_color_splash(image, r['masks'], r['rois'])
-        dirtyness_list = calculate_every_dirtyness(configuration, image, r['masks'], r['rois'])
+        tooth_result = model['tooth'].detect([image], verbose=0)[0]
+        brace_result = model['brace'].detect([image], verbose=0)[0]
+
+        tooth_mask_cut = cut_braces_from_teeth(tooth_result['masks'], brace_result['masks'])
+
+        splash = apply_color_splash(image, tooth_result['masks'], tooth_result['rois'])
+        dirtyness_list = calculate_every_dirtyness(configuration, image,
+                                                   tooth_mask_cut, tooth_result['rois'])
         splashes.append(splash)
         all_dirtyness_lists_2d.append(dirtyness_list)
 
         if inspect:
-            save_tooth_images(image, r['masks'], r['rois']);
+            save_tooth_images(image, tooth_mask_cut, tooth_result['rois']);
 
     dirtyness = calculate_overall_dirtyness(all_dirtyness_lists_2d, 0)
     return (splashes, dirtyness)
@@ -159,21 +173,32 @@ def process_file_list(model, image_paths_in, image_paths_out,
         skimage.io.imsave(image_path_out, splash, compress_level=1)
     return dirtyness
 
-def tooth_model_init(weights_path):
+def tooth_model_init(tooth_weights_path, brace_weights_path):
     # Configurations
-    class InferenceConfig(mrcnn.config.Config):
+    class ToothConfig(mrcnn.config.Config):
         # Set batch size to 1 since we'll be running inference on
         # one image at a time. Batch size = GPU_COUNT * IMAGES_PER_GPU
         NAME = "tooth"
         GPU_COUNT = 1
         IMAGES_PER_GPU = 1
         NUM_CLASSES = 1 + 1  # Background + tooth
-    config = InferenceConfig()
+    tooth_config = ToothConfig()
 
-    model = mrcnn.model.MaskRCNN(mode="inference", config=config,
-                                 model_dir=".")
+    class BraceConfig(mrcnn.config.Config):
+        NAME = "tooth"
+        GPU_COUNT = 1
+        IMAGES_PER_GPU = 1
+        NUM_CLASSES = 1 + 1 # Background + brace
+    brace_config = BraceConfig()
+
+    tooth_model = mrcnn.model.MaskRCNN(mode="inference", config=tooth_config,
+                                       model_dir=".")
+    brace_model = mrcnn.model.MaskRCNN(mode="inference", config=brace_config,
+                                       model_dir=".")
 
     # Load weights
-    print("Loading weights ", weights_path)
-    model.load_weights(weights_path, by_name=True)
-    return model
+    print("Loading weights ", tooth_weights_path, brace_weights_path)
+    tooth_model.load_weights(tooth_weights_path, by_name=True)
+    brace_model.load_weights(brace_weights_path, by_name=True)
+    
+    return {'tooth': tooth_model, 'brace': brace_model}

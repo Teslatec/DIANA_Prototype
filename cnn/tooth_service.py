@@ -107,9 +107,12 @@ if __name__ == '__main__':
     # Parse command line arguments
     parser = argparse.ArgumentParser(
         description='Detect teeth.')
-    parser.add_argument('--weights', required=True,
+    parser.add_argument('--tooth', required=True,
                         metavar="/path/to/weights.h5",
-                        help="Path to weights .h5 file or 'coco'")
+                        help="Path to tooth weights .h5 file or 'coco'")
+    parser.add_argument('--brace', required=True,
+                        metavar="/path/to/weights.h5",
+                        help="Path to brace weights .h5 file or 'coco'")
     parser.add_argument("--purity", required=True,
                         metavar="/path/to/purity.ini",
                         help="Path to PurityClass settings")
@@ -121,7 +124,7 @@ if __name__ == '__main__':
                         help='Output directory')
     args = parser.parse_args()
 
-    model = tooth.tooth_model_init(args.weights)
+    model = tooth.tooth_model_init(args.tooth, args.brace)
 
     purity_config = configparser.ConfigParser()
     purity_config.read(args.purity)

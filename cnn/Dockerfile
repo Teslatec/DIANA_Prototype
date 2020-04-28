@@ -25,7 +25,8 @@ RUN pip3 install --no-cache-dir \
                  imantics
 
 ENV PYTHONPATH /usr/local/src/Mask_RCNN
-COPY mask_rcnn_tooth_0030.h5 /app
+COPY tooth_weights.h5 /app
+COPY brace_weights.h5 /app
 COPY tooth.py /app
 COPY tooth_service.py /app
 COPY tooth_cli.py /app
@@ -34,5 +35,7 @@ COPY purity_index.py /app
 VOLUME /images
 VOLUME /app/config
 
-CMD python3 /app/tooth_service.py --weights=/app/mask_rcnn_tooth_0030.h5 \
-    --image=/images/ --purity /app/config/purity.ini
+CMD python3 /app/tooth_service.py \
+    --tooth=/app/tooth_weights.h5 \
+    --brace=brace_weights.h5 --image=/images/ \
+    --purity /app/config/purity.ini
