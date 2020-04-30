@@ -66,13 +66,13 @@ def calculate_jaw_dirtyness_old(image, masks, rois):
         splashes.append(splash)
     return np.average(results), splashes
 
-def calculate_every_dirtyness(configuration, image, masks, rois):
+def calculate_every_dirtyness(purity_class, image, masks, rois):
     results = []
     for i in range(masks.shape[2]):
         tooth_image = image[rois[i][0]:rois[i][2], rois[i][1]:rois[i][3]]
         tooth_mask = masks[rois[i][0]:rois[i][2], rois[i][1]:rois[i][3], i]
-        purity_class = PurityIndex(configuration)
         result = purity_class.get_index(tooth_image[:,:,::-1], tooth_mask);
+        result['image'] = result['image'][:,:,::-1]
         results.append(result)
     return results
 
@@ -141,20 +141,32 @@ def cut_braces_from_teeth(tooth_masks, brace_masks):
                                            np.logical_not(brace_masks[:,:,b]))
     return result
 
-def apply_color_splash2(image, rois, plaque_images, dirtyness):
+def draw_purity_index(image, purity_index):
+    index_str = "M: %3.0f%% W: %3.0f%% D: %3.0f%% %s %s" % \
+                (purity_index['month'] * 100, purity_index['week'] * 100,
+                    purity_index['day'] * 100, purity_index['color'],
+                    str(purity_index['matrix']))
+    cv2.putText(image, index_str, (0, 80),
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+
+def apply_color_splash2(image, rois, plaque_images, dirtyness, purity_index):
     result = np.copy(image)
 
     for i in range(rois.shape[0]):
         tooth = result[rois[i][0]:rois[i][2], rois[i][1]:rois[i][3]]
 
-        plaque = plaque_images[i][:,:,::-1]
+        plaque = plaque_images[i]
 
         mask = np.logical_or(np.all(plaque == (255, 255, 255), axis=2),
                              np.all(plaque == (255, 229, 204), axis=2))
         mask = mask.reshape(mask.shape + (1,));
         tooth[:] = np.where(mask, tooth, plaque)
-    cv2.putText(result, "%.2f" % (dirtyness * 100), (0, 30),
+    cv2.putText(result, "%.2f%%" % (dirtyness * 100), (0, 30),
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+
+    if purity_index is not None:
+        draw_purity_index(result, purity_index)
+
     return result
 
 def combine_pictures(image1, image2, image3, image4):
@@ -169,7 +181,18 @@ def combine_pictures(image1, image2, image3, image4):
 def draw_braces(image, masks):
     image[np.any(masks, axis=2)] = (153, 255, 153)
 
-def process_images(model, images, configuration, inspect):
+def sum_purity_results(purity_results):
+    return {
+        'total': np.sum(r['total'] for r in purity_results),
+        's': np.sum(r['s'] for r in purity_results),
+        'm': np.sum(r['m'] for r in purity_results),
+        'h': np.sum(r['h'] for r in purity_results),
+    }
+
+def index_total(purity_index):
+    return purity_index['day']  + purity_index['week'] + purity_index['month']
+
+def process_images(model, images, purity_class, inspect):
     all_dirtyness_lists_2d = []
     splashes = []
 
@@ -180,32 +203,35 @@ def process_images(model, images, configuration, inspect):
 
         tooth_mask_cut = cut_braces_from_teeth(tooth_result['masks'], brace_result['masks'])
 
-        results_braces_applied = calculate_every_dirtyness(configuration, image,
+        results_braces_applied = calculate_every_dirtyness(purity_class, image,
                                                            tooth_mask_cut, tooth_result['rois'])
         dirtyness_list_braces_applied = [((r['s'] + r['m'] + r['h'])) / r['total']
                                          for r in results_braces_applied
                                          if r['total'] != 0]
         dirtyness_braces_applied = np.average(dirtyness_list_braces_applied)
-
-        #splash = apply_color_splash(image, tooth_result['masks'], tooth_result['rois'])
+        index_braces_applied = purity_class.get_purity_index(sum_purity_results(results_braces_applied))
         splash_braces_applied = apply_color_splash2(image, tooth_result['rois'],
                                                     [r['image'] for r in results_braces_applied],
-                                                    dirtyness_braces_applied)
+                                                    index_total(index_braces_applied),
+                                                    index_braces_applied)
         draw_braces(splash_braces_applied, brace_result['masks'])
 
-        results_braces_not_applied = calculate_every_dirtyness(configuration, image,
+        results_braces_not_applied = calculate_every_dirtyness(purity_class, image,
                                                                tooth_result['masks'], tooth_result['rois'])
         dirtyness_list_braces_not_applied = [((r['s'] + r['m'] + r['h'])) / r['total']
                                             for r in results_braces_not_applied
                                             if r['total'] != 0]
         dirtyness_braces_not_applied = np.average(dirtyness_list_braces_not_applied)
+        index_braces_not_applied = purity_class.get_purity_index(sum_purity_results(results_braces_not_applied))
         splash_braces_not_applied = apply_color_splash2(image, tooth_result['rois'],
                                                         [r['image'] for r in results_braces_not_applied],
-                                                        dirtyness_braces_not_applied)
+                                                        index_total(index_braces_not_applied),
+                                                        index_braces_not_applied)
 
         dirtyness_old, splashes_old = calculate_jaw_dirtyness_old(image, tooth_result['masks'], tooth_result['rois'])
         splash_old = apply_color_splash2(image, tooth_result['rois'],
-                                         splashes_old, dirtyness_old)
+                                         splashes_old, dirtyness_old,
+                                         None)
 
         splashes.append(combine_pictures(image, splash_old,
                                          splash_braces_not_applied,
@@ -249,7 +275,9 @@ def process_file_list(model, image_paths_in, image_paths_out,
         print("No images to process")
         return None
 
-    splashes, dirtyness = process_images(model, images, configuration, inspect)
+    purity_class = PurityIndex(configuration)
+
+    splashes, dirtyness = process_images(model, images, purity_class, inspect)
     for splash, image_path_out in zip(splashes, image_paths_out):
         skimage.io.imsave(image_path_out, splash, compress_level=1)
     return dirtyness
