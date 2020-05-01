@@ -5,6 +5,9 @@ services:
     restart: always
     volumes:
       - "image-volume:/images"
+      - "./cnn_config:/app/config"
+    environment:
+      - PYTHONUNBUFFERED=1
   denta:
     image: image-service-denta
     restart: always
