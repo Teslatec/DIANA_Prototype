@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM ubuntu:18.04
 WORKDIR '/app'
 RUN apt-get update && apt-get install --no-install-recommends -y \
                         git \
@@ -30,6 +30,7 @@ COPY brace_weights.h5 /app
 COPY tooth.py /app
 COPY tooth_service.py /app
 COPY tooth_cli.py /app
+COPY tooth_test.py /app
 COPY purity_index.py /app
 
 VOLUME /images
