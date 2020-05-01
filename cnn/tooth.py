@@ -32,28 +32,15 @@ def apply_color_splash(image, mask, rois):
         mrcnn.visualize.draw_box(splash, rois[i], (0, 192, 0))
     return splash
 
-def calculate_tooth_dirtyness(image, mask):
-    shape = image.shape;
-    dirty_count = 0
-    all_count = 0
-    for row in range(shape[0]):
-        for col in range(shape[1]):
-            if mask[row, col]:
-                r, g, b = image[row, col]
-                if (3 < r < 186) and (17 < g < 75) and (37 < b < 160):
-                    dirty_count += 1
-                all_count += 1
-    return float(dirty_count) / float(all_count)
-
-def calculate_every_dirtyness(configuration, image, masks, rois):
-    dirtyness_list = []
+def calculate_every_dirtyness(purity_class, image, masks, rois):
+    results = []
     for i in range(masks.shape[2]):
         tooth_image = image[rois[i][0]:rois[i][2], rois[i][1]:rois[i][3]]
         tooth_mask = masks[rois[i][0]:rois[i][2], rois[i][1]:rois[i][3], i]
-        purity_class = PurityIndex(configuration)
-        dirtyness = purity_class.get_index(tooth_image, tooth_mask);
-        dirtyness_list.append(dirtyness)
-    return dirtyness_list
+        result = purity_class.get_index(tooth_image[:,:,::-1], tooth_mask);
+        result['image'] = result['image'][:,:,::-1]
+        results.append(result)
+    return results
 
 def prepare_image(image):
     result = {}
@@ -120,9 +107,20 @@ def cut_braces_from_teeth(tooth_masks, brace_masks):
                                            np.logical_not(brace_masks[:,:,b]))
     return result
 
-def process_images(model, images, configuration, inspect):
-    all_dirtyness_lists_2d = []
+def sum_purity_results(purity_results):
+    return {
+        'total': np.sum(r['total'] for r in purity_results),
+        's': np.sum(r['s'] for r in purity_results),
+        'm': np.sum(r['m'] for r in purity_results),
+        'h': np.sum(r['h'] for r in purity_results),
+    }
+
+def index_total(purity_index):
+    return purity_index['day']  + purity_index['week'] + purity_index['month']
+
+def process_images(model, images, purity_class, inspect):
     splashes = []
+    dirtyness_list = []
 
     for image in images:
         image = prepare_image(image)
@@ -131,16 +129,26 @@ def process_images(model, images, configuration, inspect):
 
         tooth_mask_cut = cut_braces_from_teeth(tooth_result['masks'], brace_result['masks'])
 
-        splash = apply_color_splash(image, tooth_result['masks'], tooth_result['rois'])
-        dirtyness_list = calculate_every_dirtyness(configuration, image,
-                                                   tooth_mask_cut, tooth_result['rois'])
+        results = calculate_every_dirtyness(purity_class, image,
+                                            tooth_mask_cut, tooth_result['rois'])
+        purity_index = purity_class.get_purity_index(sum_purity_results(results))
+        dirtyness = index_total(purity_index)
+        dirtyness_list.append(dirtyness)
+
+        splash = apply_color_splash(image, tooth_result['masks'],
+                                    tooth_result['rois'])
+
         splashes.append(splash)
-        all_dirtyness_lists_2d.append(dirtyness_list)
 
         if inspect:
             save_tooth_images(image, tooth_mask_cut, tooth_result['rois']);
 
-    dirtyness = calculate_overall_dirtyness(all_dirtyness_lists_2d, 0)
+            #for i, t in enumerate(r['image'] for r in results):
+            #    directory = "/images/output/inspection/"
+            #    path = directory + str(i).zfill(2) + "t" + ".png"
+            #    skimage.io.imsave(path, t, compress_level=1)
+
+    dirtyness = np.average(dirtyness_list)
     return (splashes, dirtyness)
 
 def load_images(paths_in, paths_out):
@@ -168,7 +176,9 @@ def process_file_list(model, image_paths_in, image_paths_out,
         print("No images to process")
         return None
 
-    splashes, dirtyness = process_images(model, images, configuration, inspect)
+    purity_class = PurityIndex(configuration)
+
+    splashes, dirtyness = process_images(model, images, purity_class, inspect)
     for splash, image_path_out in zip(splashes, image_paths_out):
         skimage.io.imsave(image_path_out, splash, compress_level=1)
     return dirtyness

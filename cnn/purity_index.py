@@ -21,12 +21,13 @@ class PurityIndex:
         self.H_Cof = int(self.config.get('Settings', 'H_Cof'))
 
 
-    def get_index(self, image, mask):
+    def get_index(self, image, mask):   
         mask = mask.astype(np.uint8) * 255
         masked = cv2.bitwise_and(image, image, mask=mask)
         preview_image = self.get_prview_image(masked)
         averagePhoto = self.makeAveregePhoto(preview_image) 
-        return self.updatePercentageTable(averagePhoto)
+
+        return self.count_tooth_purity_pixel(averagePhoto)
 
     def get_prview_image(self, cropped):
         
@@ -130,26 +131,117 @@ class PurityIndex:
         return mask
 
 
-    def updatePercentageTable(self, open_cv_image): 
+    def count_tooth_purity_pixel(self, open_cv_image): 
 
-        total, clear_pix, s_pix, m_pix, h_pix= 0,0,0,0,0
-        colours, counts = np.unique(open_cv_image.reshape(-1,3), axis=0, return_counts=1)
+        tooth_purty_pixel =  {
+                    'total': 0,
+                    's': 0,
+                    'm': 0,
+                    'h': 0, 
+                    'image': open_cv_image
+                } 
+                    
+        colours, counts = np.unique(open_cv_image.reshape(-1,3), axis=0, return_counts=1)  
 
-        total = np.sum(counts) 
+        for i in range(len(colours)):           
+            if (list(colours[i]) == [217, 102, 255]):
+                tooth_purty_pixel['s'] = counts[i]
 
-        for i in range(len(colours)):          
-            if (list(colours[i]) == [255, 229, 204]):
-                clear_pix = counts[i]
-            elif (list(colours[i]) == [217, 102, 255]):
-                s_pix = counts[i]
             elif (list(colours[i]) == [255, 26, 26]):
-                m_pix = counts[i]
-            elif (list(colours[i]) == [26, 26, 255]):
-                h_pix = counts[i] 
-            elif(list(colours[i]) == [255, 255, 255]):
-                total = total - counts[i]
-        
-        x = s_pix * self.S_Cof  + m_pix * self.M_Cof + h_pix *  self.H_Cof
-        total_ratio = (x / total)
+                tooth_purty_pixel['m'] = counts[i]
 
-        return total_ratio
+            elif (list(colours[i]) == [26, 26, 255]):
+                tooth_purty_pixel['h'] = counts[i]
+                
+            elif(list(colours[i]) == [255, 255, 255]):
+                tooth_purty_pixel['total'] =  np.sum(counts)  - counts[i]
+
+
+        return tooth_purty_pixel  
+
+
+
+
+    def get_purity_index(self, tooth_purty_pixel):
+
+        day_persent = (1 - (tooth_purty_pixel['total'] - tooth_purty_pixel['s']) / tooth_purty_pixel['total']) 
+        day_index = self.get_day_plaque_index(day_persent)
+
+        week_persent = (1 - (tooth_purty_pixel['total'] - tooth_purty_pixel['m']) / tooth_purty_pixel['total']) 
+        week_index = self.get_week_plaque_index(week_persent)
+
+        month_persent = (1 - (tooth_purty_pixel['total'] - tooth_purty_pixel['h']) / tooth_purty_pixel['total'])
+        month_index = self.get_month_plaque_index(month_persent)
+
+        matrix = [month_index, week_index, day_index]
+
+        return {
+            'color': self.get_total_color(matrix),
+            'matrix' : matrix,
+            'day': day_persent,
+            'week': week_persent,
+            'month': month_persent,             
+        }    
+
+    
+    def get_total_color(self, total_matrix):
+
+        green = [
+                [3,3,3],
+                [3,2,2],
+                [2,3,3]           
+            ]
+
+        red = [
+                [1,1,1],
+                [1,2,3],
+                [1,3,2],
+                [1,2,1],
+                [1,1,2],
+                [1,2,2],
+                [1,1,3],
+                [1,3,1],
+                [1,3,3],
+                [2,1,1],
+                [2,1,2]
+            ]
+
+        if (total_matrix in green):
+            return 'green'
+        elif (total_matrix in red):
+            return 'red'
+
+        return 'yellow'
+        
+
+    def get_day_plaque_index(self, percent):
+
+        percent = percent*100
+        if (0 <= percent < 20):
+            return 3
+        elif(20 < percent < 50):
+            return 2
+        elif(50 <= percent):
+            return 1     
+
+
+    def get_week_plaque_index(self, percent):
+
+        percent = percent*100
+        if (0 <= percent < 5):
+            return 3
+        elif(5 < percent < 25):
+            return 2
+        elif(25 <= percent):
+            return 1       
+
+
+    def get_month_plaque_index(self, percent):
+
+        percent = percent*100   
+        if (0 <= percent < 0.1):
+            return 3
+        elif(0.1 < percent < 5):
+            return 2
+        elif(5 <= percent):
+            return 1   
