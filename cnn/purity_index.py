@@ -56,8 +56,11 @@ class PurityIndex:
 
                 sr = 0.2126 * r + 0.7152 * g + 0.0722 * b
 
-                if (r == 0 and g == 255 and b == 0 ):
+                # Delet green and black from index
+                if (r == 0 and g == 0 and b == 0 ):
                     array0.append(sr)
+                elif (r == 0 and g == 255 and b == 0 ):
+                    array0.append(sr)    
                 else:
                     array.append(sr)
 
