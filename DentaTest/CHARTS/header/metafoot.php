@@ -3,7 +3,7 @@
 <script src="js/outerLabels.js"></script>
 
 <script type="text/javascript">
-   var selectors = document.getElementById('selectors').innerHTML;
+   var selectors = <?= $category_id ?>;
 
    if (selectors == 1) {
       show('chartselect1img');
@@ -20,12 +20,12 @@
 
 
 //   alert(selectors);
-   var chart_1_data_1 = document.getElementById('chart_1_data_1').innerHTML;
-   var chart_1_data_2 = document.getElementById('chart_1_data_2').innerHTML;
-   var chart_1_data_3 = document.getElementById('chart_1_data_3').innerHTML;
+   var chart_1_data_1 = <?= $longterm_index ?>;
+   var chart_1_data_2 = <?= $daily_index ?>;
+   var chart_1_data_3 = <?= $pure_index ?>;
 
-   var chart_2_data_1 = document.getElementById('chart_2_data_1').innerHTML;
-   var chart_2_data_2 = document.getElementById('chart_2_data_2').innerHTML;
+   var chart_2_data_1 = <?= $longterm_index ?>;
+   var chart_2_data_2 = <?= $daily_index ?>;
 
 
    var heighty = parseInt(chart_2_data_1) + parseInt(chart_2_data_2);

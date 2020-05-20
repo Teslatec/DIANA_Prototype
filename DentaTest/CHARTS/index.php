@@ -180,34 +180,6 @@
             </div>
    </div>
    <!--   ОСНОВНОЙ БЛОК   -->
-
-
-
-<!--   забивка пространства   -->
-   <div class="row footer">
-      <div class="row footer__back" style="margin:20px auto;height:100px;width:100%;">
-        <div class="col-xs-4">
-            <h5>Переключатели</h5>
-            <h5 id="selectors"><?= $category_id ?></h5>
-        </div>
-        <div class="col-xs-4">
-           <h5>График 1</h5>
-            <h5 id="chart_1_data_1"><?= $longterm_index ?></h5>
-            <h5 id="chart_1_data_2"><?= $daily_index ?></h5>
-            <h5 id="chart_1_data_3"><?= $pure_index ?></h5>
-        </div>
-        <div class="col-xs-4">
-           <h5>График 2</h5>
-            <h5 id="chart_2_data_1">30</h5>
-            <h5 id="chart_2_data_2">20</h5>
-        </div>
-
-
-      </div>
-   </div>
-<!--   забивка пространства   -->
-
-
 </body>
 <!--   .JS, script & etc   -->
 <?php require_once 'header/metafoot.php'; ?>
