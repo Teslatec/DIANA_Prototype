@@ -48,13 +48,13 @@ def process_request(model, purity_config, workdir, json_object):
         print("Image path: ", image_path_in)
         sys.stdout.flush()
 
-    dirtyness = tooth.process_file_list(model, image_paths_in, image_paths_out,
-                                        purity_config)
-    print("Dirtyness:", dirtyness)
+    purity_index = tooth.process_file_list(model, image_paths_in, image_paths_out,
+                                           purity_config)
+    print("purity_index:", purity_index)
     sys.stdout.flush()
 
     return {
-        "dirtyness": dirtyness,
+        "purity_index": purity_index,
         "images": list(map(lambda finout: {"in": finout[0], "out": finout[1]},
                            zip(filenames_in, filenames_out)))
     }

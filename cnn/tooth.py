@@ -120,7 +120,7 @@ def index_total(purity_index):
 
 def process_images(model, images, purity_class, inspect):
     splashes = []
-    dirtyness_list = []
+    results = []
 
     for image in images:
         image = prepare_image(image)
@@ -129,27 +129,21 @@ def process_images(model, images, purity_class, inspect):
 
         tooth_mask_cut = cut_braces_from_teeth(tooth_result['masks'], brace_result['masks'])
 
-        results = calculate_every_dirtyness(purity_class, image,
-                                            tooth_mask_cut, tooth_result['rois'])
-        purity_index = purity_class.get_purity_index(sum_purity_results(results))
-        dirtyness = index_total(purity_index)
-        dirtyness_list.append(dirtyness)
+        results.extend(calculate_every_dirtyness(purity_class, image,
+                                                 tooth_mask_cut, tooth_result['rois']))
 
         splash = apply_color_splash(image, tooth_result['masks'],
                                     tooth_result['rois'])
-
         splashes.append(splash)
-
         if inspect:
             save_tooth_images(image, tooth_mask_cut, tooth_result['rois']);
-
             #for i, t in enumerate(r['image'] for r in results):
             #    directory = "/images/output/inspection/"
             #    path = directory + str(i).zfill(2) + "t" + ".png"
             #    skimage.io.imsave(path, t, compress_level=1)
 
-    dirtyness = np.average(dirtyness_list)
-    return (splashes, dirtyness)
+    purity_index = purity_class.get_purity_index(sum_purity_results(results))
+    return (splashes, purity_index)
 
 def load_images(paths_in, paths_out):
     images = []
