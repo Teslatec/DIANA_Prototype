@@ -2,9 +2,6 @@ FROM mcr.microsoft.com/dotnet/core/sdk:3.0 AS builder
 WORKDIR '/src'
 COPY DentaTest /src/DentaTest/
 COPY DentaTest.sln /src/
-RUN dotnet remove DentaTest package PDFsharp; exit 0
-RUN dotnet remove DentaTest package PDFsharp-MigraDoc; exit 0
-RUN dotnet add DentaTest package Drive.MigraDocPdfSharp --version 1.0.0-preview2-1
 RUN dotnet publish -c Release
 
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.0
@@ -21,9 +18,11 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
                         libgdiplus \
                         ttf-mscorefonts-installer \
                         fonts-crosextra-carlito \
-                        fonts-crosextra-caladea
+                        fonts-crosextra-caladea \
+                        php7.3-cli
 
 COPY logo.png /app/
+COPY CHARTS /app/CHARTS/
 COPY --from=builder /src/DentaTest/bin/Release/netcoreapp3.0/publish /app/
 CMD /app/DentaTest
 

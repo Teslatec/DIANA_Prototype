@@ -6,10 +6,20 @@ using System.Threading.Tasks;
 
 namespace DentaTest.Models
 {
+    public class PurityIndex
+    {
+        [JsonProperty("day")]
+        public float Day { get; set; }
+        [JsonProperty("week")]
+        public float Week { get; set; }
+        [JsonProperty("month")]
+        public float Month { get; set; }
+    }
+
     public class IndexResponseModel
     {
-        [JsonProperty("dirtyness")]
-        public float Dirtyness { get; set; }
+        [JsonProperty("purity_index")]
+        public PurityIndex PurityIndex { get; set; }
         [JsonProperty("images")]
         public ICollection<ImageResponseModel> Images { get; set; }
     }

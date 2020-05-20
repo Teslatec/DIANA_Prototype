@@ -1,6 +1,4 @@
 ﻿using DentaTest.Models;
-using PdfSharp.Drawing;
-using PdfSharp.Pdf;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -16,176 +14,17 @@ namespace DentaTest.Infrastructure
         public static byte[] ConvertToPdf(IndexResponseModel model, string requestId)
         {
             Log.Information("Request ({0}): Making PDF in {1}", requestId, nameof(ConvertToPdf));
+
+
             byte[] pdfBuffer = null;
             try 
             {
-                using (var stream = new MemoryStream())
-                {
-                    var document = new MigraDoc.DocumentObjectModel.Document();
-                    document.Info.Title = "Dental index";
-                    document.Info.Subject = "";
-                    document.Info.Author = "DIANA";
+                using var stream = new MemoryStream();
 
-                    var section = document.AddSection();
+                string html = runPhp(model.PurityIndex);
 
-                    
-                    var header = section.Headers.Primary;
-                    //var logoImage = header.AddImage(Directory.GetCurrentDirectory() + "/" + "logo.png");
-                    //logoImage.LockAspectRatio = true;
-                    //logoImage.Height = "0.8382cm";
-                    var paragraph = header.AddParagraph();
-                    //paragraph.AddFormattedText("Dental Index Analysis Application", new MigraDoc.DocumentObjectModel.Font("Verdana"));
+                Console.WriteLine("HTML Output: " + html);
 
-                    paragraph = section.AddParagraph();
-                    var fontMain = new MigraDoc.DocumentObjectModel.Font("Arial", 18);
-                    fontMain.Bold = true;
-                    var fontSecond = new MigraDoc.DocumentObjectModel.Font("Arial", 16);
-                    paragraph.Format.Alignment = MigraDoc.DocumentObjectModel.ParagraphAlignment.Center;
-                    paragraph.AddFormattedText("Результат расчёта", fontMain);
-                    paragraph.Format.SpaceBefore = 24.0;
-                    paragraph.Format.SpaceAfter = 12.0;
-
-                    paragraph = section.AddParagraph();
-                    //paragraph.AddFormattedText("Ф.И.О. пациента: ");
-                    //paragraph.AddLineBreak();
-                    //paragraph.AddFormattedText("Ф.И.О. врача: ");
-                    //paragraph.AddLineBreak();
-                    paragraph.AddFormattedText("Дата и время приёма: " +
-                           System.DateTime.Now.ToString(new System.Globalization.CultureInfo("ru-RU")), fontSecond);
-                    paragraph.Format.LineSpacing = 12.0;
-                    paragraph.Format.LineSpacingRule = MigraDoc.DocumentObjectModel.LineSpacingRule.Exactly;
-                    paragraph.Format.SpaceAfter = 24.0;
-
-                    int hygieneIndex = (int)Math.Round(model.Dirtyness * 100.0);
-                    paragraph = section.AddParagraph();
-                    paragraph.Format.Shading.Color = hygieneIndexToColor(hygieneIndex);
-                    //font = new MigraDoc.DocumentObjectModel.Font("Arial", 16);
-
-                    paragraph.AddFormattedText(
-                            string.Format("Индекс гигиены полости рта: {0}%*",
-                                hygieneIndex), fontMain);
-                    paragraph.Format.SpaceAfter = 12.0;
-
-
-                    var table = section.AddTable();
-                    for (int i = 0; i < 3; i++)
-                    {
-                        var column = table.AddColumn();
-                    }
-                    table.Columns[0].Width = 15;
-                    table.Columns[2].Width = 500;
-                    MigraDoc.DocumentObjectModel.Tables.Row row = null;
-                    
-                    row = table.AddRow();
-                    paragraph = row.Cells[0].AddParagraph();
-                    paragraph.AddFormattedText("*", fontSecond);
-
-                    paragraph = row.Cells[1].AddParagraph();
-                    paragraph.AddFormattedText(percentageRangeString(0), fontSecond);
-                    paragraph.Format.Shading.Color = indexColors[0];
-                   
-                    paragraph = row.Cells[2].AddParagraph();
-                    paragraph.AddFormattedText("гигиена хорошая", fontSecond);
-                    
-                    row = table.AddRow();
-                    paragraph = row.Cells[1].AddParagraph();
-                    paragraph.AddFormattedText(percentageRangeString(1), fontSecond);
-                    paragraph.Format.Shading.Color = indexColors[1];
-
-                    paragraph = row.Cells[2].AddParagraph();
-                    paragraph.AddFormattedText("гигиена удовлетворительная", fontSecond);
-
-                    row = table.AddRow();
-                    paragraph = row.Cells[1].AddParagraph();
-                    paragraph.AddFormattedText(percentageRangeString(2), fontSecond);
-                    paragraph.Format.Shading.Color = indexColors[2];
-                    
-                    paragraph = row.Cells[2].AddParagraph();
-                    paragraph.AddFormattedText("гигиена неудовлетворительная", fontSecond);
-
-                    row = table.AddRow();
-                    paragraph = row.Cells[1].AddParagraph();
-                    paragraph.AddFormattedText(percentageRangeString(3), fontSecond);
-                    paragraph.Format.Shading.Color = indexColors[3];
-
-                    paragraph = row.Cells[2].AddParagraph();
-                    paragraph.AddFormattedText("гигиена плохая", fontSecond);
-
-                    paragraph = section.AddParagraph();
-                    paragraph.AddFormattedText("Фотопротокол полости рта:",fontSecond);
-                    paragraph.Format.SpaceBefore = 12.0;
-                    paragraph.Format.SpaceAfter = 12.0;
-
-                    var nColumns = 3;
-
-                    float sectionWidth = document.DefaultPageSetup.PageWidth -
-                                         document.DefaultPageSetup.LeftMargin -
-                                         document.DefaultPageSetup.RightMargin;
-
-                    float columnWidth = sectionWidth / nColumns;
-                    table = section.AddTable();
-                    for (int i = 0; i < nColumns; i++)
-                    {
-                        var column = table.AddColumn();
-                        column.Width = columnWidth;
-                    }
-
-                    var imagesDrawn = 0;
-                    row = null;
-                    foreach (var image in model.Images)
-                    {
-                        var columnIndex = imagesDrawn % nColumns;
-                        if (columnIndex == 0)
-                        {
-                            row = table.AddRow();
-                            row.Height = 100;
-                        }
-                        string fullPath = _directory + image.OutPath;
-                        
-                        var pdfImage = row.Cells[columnIndex].AddImage(fullPath);
-                        Console.WriteLine("Added an image " + fullPath);
-                        pdfImage.LockAspectRatio = true;
-                        pdfImage.Width = "5.0cm";
-                        imagesDrawn++;
-                    }
-                    
-                    //paragraph = section.AddParagraph();
-                    //paragraph.Format.SpaceBefore = 12.0;
-                    //paragraph.AddFormattedText("Рекомендации:");
-
-                    //for (int i = 0; i < 5; i++)
-                    //{
-                    //    paragraph = section.AddParagraph();
-                    //    paragraph.Format.Alignment = MigraDoc.DocumentObjectModel.ParagraphAlignment.Center;
-                    //    //...any other formats needed
-                    //    paragraph.Format.Borders.Bottom = new MigraDoc.DocumentObjectModel.Border()
-                    //    {
-                    //        Width = "1pt",
-                    //        Color = MigraDoc.DocumentObjectModel.Colors.DarkGray
-                    //    };
-                    //    paragraph.Format.SpaceBefore = 12.0;
-                    //}
-
-                    var renderer = new MigraDoc.Rendering.PdfDocumentRenderer(true, PdfSharp.Pdf.PdfFontEmbedding.Always);
-                    renderer.Document = document;
-                    try
-                    {
-                        Log.Information("Request ({0}): Rendering PDF in {1}", requestId, nameof(ConvertToPdf));
-                        renderer.RenderDocument();
-                        renderer.PdfDocument.Save(stream, false);
-                        pdfBuffer = stream.ToArray();
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error(ex, "Request ({0}): Failed at render PDF in {1}", requestId, nameof(ConvertToPdf));
-                        return null;
-                    }
-                    finally
-                    {
-                        stream.Close();
-                        stream.Dispose();
-                    }
-                }
             }
             catch (Exception ex)
             {
@@ -197,36 +36,38 @@ namespace DentaTest.Infrastructure
             return pdfBuffer;
         }
 
+        private static string runPhp(PurityIndex purityIndex) {
+            int longTerm = (int)Math.Round((purityIndex.Week + purityIndex.Month) * 100.0);
+            int daily = (int)Math.Round(purityIndex.Day * 100.0);
+            int pure = 100 - longTerm - daily;
+            int category;
+
+            string phpArguments = String.Format("-d auto_prepend_file=prepend.php index.php daily_index={0} longterm_index={1} pure_index={2} category_id={3}",
+                                                daily, longTerm,
+                                                pure, category);
+            if (longTerm < 15) {
+                category = 1;
+            } else if (longTerm < 50) {
+                category = 2;
+            } else {
+                category = 3;
+            }
+
+            // FIXME: somebody break up arguments string, I don't know how
+            using System.Diagnostics.Process phpProcess = new System.Diagnostics.Process();
+            phpProcess.StartInfo.FileName = "/usr/bin/php";
+            phpProcess.StartInfo.Arguments = phpArguments;
+            phpProcess.StartInfo.UseShellExecute = false;
+            phpProcess.StartInfo.RedirectStandardOutput = true;
+            phpProcess.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+            phpProcess.StartInfo.CreateNoWindow = true;
+            phpProcess.StartInfo.WorkingDirectory = "/app/CHARTS/"; // TODO: get directory path from the environment
+            phpProcess.Start();
+            string output = phpProcess.StandardOutput.ReadToEnd();
+            phpProcess.WaitForExit();
+            return output;
+        }
+
         private static readonly string _directory = Environment.GetEnvironmentVariable("image_dir");
-
-        private static readonly MigraDoc.DocumentObjectModel.Color[] indexColors = new MigraDoc.DocumentObjectModel.Color[]
-        {
-            MigraDoc.DocumentObjectModel.Colors.ForestGreen,
-            MigraDoc.DocumentObjectModel.Colors.Cyan,
-            MigraDoc.DocumentObjectModel.Colors.Yellow,
-            MigraDoc.DocumentObjectModel.Colors.Red,
-        };
-        private static readonly int[] indexThresholds = new int[] {15, 35, 60};
-
-        /* index argument: index in indexThresholds array */
-        private static string percentageRangeString(int index) {
-            double low = index <= 0 ? 0 : indexThresholds[index - 1] + 1;
-            double high = index >= indexThresholds.Length ? 
-                                    100 : indexThresholds[index];
-            return string.Format("{0}-{1}%", low, high);
-        }
-
-        private static MigraDoc.DocumentObjectModel.Color hygieneIndexToColor(int hygieneIndex) {
-            int i = 0;
-            while (i < indexThresholds.Length && indexThresholds[i] <= hygieneIndex) {
-                i++;
-            }
-            
-            if (i >= indexThresholds.Length) {
-                i = indexThresholds.Length - 1;
-            }
-
-            return indexColors[i];
-        }
     }
 }

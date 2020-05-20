@@ -40,7 +40,7 @@ namespace DentaTest.Infrastructure
                 return;
             }
             
-            var result = await EmailService.SendEmailAsync(model.Email, "DIANA - Dental Index Analysis Application", index.Dirtyness.ToString(), pdf, traceId);
+            var result = await EmailService.SendEmailAsync(model.Email, "DIANA - Dental Index Analysis Application", /*TODO: remove this argument*/"", pdf, traceId);
             if (!result)
             {
                 Log.Error("Request ({0}): Pipiline ended without result in {1} because error in email service", traceId, nameof(NewPipelineAsync));
