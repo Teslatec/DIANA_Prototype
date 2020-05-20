@@ -165,13 +165,13 @@
                   </div>
                   <!-- three image's rows -->
                   <div class="row right_block_2">
-                     <img src="img/img.jpg" alt="" class="imageblock">
+                     <img src=<?= $img1 ?> alt="" class="imageblock">
                   </div>
                   <div class="row right_block_3">
-                     <img src="img/img.jpg" alt="" class="imageblock">
-                  </div>
+                     <img src=<?= $img2 ?> alt="" class="imageblock">
+                  </div> 
                   <div class="row right_block_4">
-                     <img src="img/img.jpg" alt="" class="imageblock">
+                     <img src=<?= $img3 ?> alt="" class="imageblock">
                   </div>
                   <!-- upperlined text row -->
                   <div class="row right_block_5">

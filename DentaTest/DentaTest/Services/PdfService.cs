@@ -19,7 +19,7 @@ namespace DentaTest.Infrastructure
             byte[] pdfBuffer = null;
             try 
             {
-                string html = runPhp(model.PurityIndex);
+                string html = runPhp(model);
                 pdfBuffer = runWkhtmltopdf(html);
             }
             catch (Exception ex)
@@ -32,7 +32,8 @@ namespace DentaTest.Infrastructure
             return pdfBuffer;
         }
 
-        private static string runPhp(PurityIndex purityIndex) {
+        private static string runPhp(IndexResponseModel model) {
+            var purityIndex = model.PurityIndex;
             int longTerm = (int)Math.Round((purityIndex.Week + purityIndex.Month) * 100.0);
             int daily = (int)Math.Round(purityIndex.Day * 100.0);
             int pure = 100 - longTerm - daily;
@@ -48,16 +49,34 @@ namespace DentaTest.Infrastructure
             DateTime foo = DateTime.UtcNow;
             long unixTime = ((DateTimeOffset)foo).ToUnixTimeSeconds();
 
-            // FIXME: somebody break up arguments string, I don't know how
+            string[] imageUrls = new string[3];
+            int i = 0;
+            foreach (var image in model.Images) {
+                if (i >= imageUrls.Length) {
+                    break;
+                }
+                imageUrls[i] = "\"file://" + _directory + image.OutPath + "\"";
+                Console.WriteLine("IMAGE URL:" + imageUrls[i]);
+                i++;
+            }
+            for (; i < imageUrls.Length; i++) {
+                imageUrls[i] = "\"img/empty.png\"";
+            }
+
             string phpArguments = String.Format("-d auto_prepend_file=prepend.php " +
                                                 "index.php " +
                                                 "daily_index={0} " +
                                                 "longterm_index={1} " +
                                                 "pure_index={2} " +
                                                 "category_id={3} " +
-                                                "timestamp={4} ",
+                                                "timestamp={4} " +
+                                                "img1={5} " +
+                                                "img2={6} " +
+                                                "img3={7} ",
                                                 daily, longTerm, pure,
-                                                category, unixTime);
+                                                category, unixTime,
+                                                imageUrls[0], imageUrls[1],
+                                                imageUrls[2]);
             using System.Diagnostics.Process phpProcess = new System.Diagnostics.Process();
             phpProcess.StartInfo.FileName = "/usr/bin/php";
             phpProcess.StartInfo.Arguments = phpArguments;
@@ -85,7 +104,6 @@ namespace DentaTest.Infrastructure
             wkhtmltopdfProcess.Start();
 
             StreamWriter stdinWriter = wkhtmltopdfProcess.StandardInput;
-            Console.WriteLine("Before write");
 
             /* Workaround for wkhtmltopdf using /tmp as a working directory 
              * when reading html from stdin */
@@ -93,13 +111,10 @@ namespace DentaTest.Infrastructure
 
             stdinWriter.Write(html);
             stdinWriter.Close();
-            Console.WriteLine("After write");
 
-            Console.WriteLine("Before read");
             using var memoryStream = new MemoryStream();
             wkhtmltopdfProcess.StandardOutput.BaseStream.CopyTo(memoryStream);
             byte[] output = memoryStream.ToArray();
-            Console.WriteLine("After read");
             wkhtmltopdfProcess.WaitForExit();
             return output;
         }
