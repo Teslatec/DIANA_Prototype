@@ -52,7 +52,7 @@
                                     </div>
                                     <div class="col-xs-9" style="padding: 5px 10px;height: 45px;">
                                        <h4 style="font-size: 14px;text-align:left;line-height: 20px;">Высокий риск</h4>
-                                       <p style="line-height: 15px;">заболеваний полости рта</p>
+                                       <p style="line-height: 8px;">заболеваний полости рта</p>
                                     </div>
                                  </div>
                                  <!-- yellow select row -->
@@ -62,7 +62,7 @@
                                     </div>
                                     <div class="col-xs-9" style="padding: 5px 10px;height: 45px;">
                                        <h4 style="font-size: 14px;text-align:left;line-height: 20px;">Средний риск</h4>
-                                       <p style="line-height: 15px;">заболеваний полости рта</p>
+                                       <p style="line-height: 8px;">заболеваний полости рта</p>
                                     </div>
                                  </div>
                                  <!-- green select row -->
@@ -72,7 +72,7 @@
                                     </div>
                                     <div class="col-xs-9" style="padding: 5px 10px;height: 45px;">
                                        <h4 style="font-size: 14px;text-align:left;line-height: 20px;">Низкий риск</h4>
-                                       <p style="line-height: 15px;">заболеваний полости рта</p>
+                                       <p style="line-height: 8px;">заболеваний полости рта</p>
                                     </div>
 
                                  </div>
@@ -82,7 +82,7 @@
                   <!-- decription of barchart -->
                   <div class="row" style="height:40px;">
                        <div class="row" style="height:23px;">
-                          <p style="font-size:12px;padding-left:10px;">Оценка времени образования зубного налета:</p>
+                          <p style="font-size:12px;padding-left:10px;">Оценка времени образования зубного налёта:</p>
                        </div>
                        <div class="row" style="padding:0 0 0 10px;">
                            <div class="col-xs-3" style="width:163.3px;">
