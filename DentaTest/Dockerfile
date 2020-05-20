@@ -25,5 +25,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 COPY logo.png /app/
 COPY CHARTS /app/CHARTS/
 COPY --from=builder /src/DentaTest/bin/Release/netcoreapp3.0/publish /app/
+ENV template_dir /app/CHARTS/
 CMD /app/DentaTest
 

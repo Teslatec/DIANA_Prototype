@@ -55,7 +55,7 @@ namespace DentaTest.Infrastructure
                 if (i >= imageUrls.Length) {
                     break;
                 }
-                imageUrls[i] = "\"file://" + _directory + image.OutPath + "\"";
+                imageUrls[i] = "\"file://" + _imageDirectory + image.OutPath + "\"";
                 Console.WriteLine("IMAGE URL:" + imageUrls[i]);
                 i++;
             }
@@ -84,7 +84,7 @@ namespace DentaTest.Infrastructure
             phpProcess.StartInfo.RedirectStandardOutput = true;
             phpProcess.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
             phpProcess.StartInfo.CreateNoWindow = true;
-            phpProcess.StartInfo.WorkingDirectory = "/app/CHARTS/"; // TODO: get directory path from the environment
+            phpProcess.StartInfo.WorkingDirectory = _templateDirectory; // TODO: get directory path from the environment
             phpProcess.Start();
             string output = phpProcess.StandardOutput.ReadToEnd();
             phpProcess.WaitForExit();
@@ -100,14 +100,14 @@ namespace DentaTest.Infrastructure
             wkhtmltopdfProcess.StartInfo.RedirectStandardOutput = true;
             wkhtmltopdfProcess.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
             wkhtmltopdfProcess.StartInfo.CreateNoWindow = true;
-            wkhtmltopdfProcess.StartInfo.WorkingDirectory = "/app/CHARTS/"; // TODO: get directory path from the environment
+            wkhtmltopdfProcess.StartInfo.WorkingDirectory = _templateDirectory; // TODO: get directory path from the environment
             wkhtmltopdfProcess.Start();
 
             StreamWriter stdinWriter = wkhtmltopdfProcess.StandardInput;
 
             /* Workaround for wkhtmltopdf using /tmp as a working directory 
              * when reading html from stdin */
-            stdinWriter.Write("<base href=\"file:///app/CHARTS/\">");
+            stdinWriter.Write("<base href=\"file://" + _templateDirectory + "\">");
 
             stdinWriter.Write(html);
             stdinWriter.Close();
@@ -119,6 +119,7 @@ namespace DentaTest.Infrastructure
             return output;
         }
 
-        private static readonly string _directory = Environment.GetEnvironmentVariable("image_dir");
+        private static readonly string _imageDirectory = Environment.GetEnvironmentVariable("image_dir");
+        private static readonly string _templateDirectory = Environment.GetEnvironmentVariable("template_dir");
     }
 }
