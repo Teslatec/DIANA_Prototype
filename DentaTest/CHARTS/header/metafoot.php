@@ -23,14 +23,12 @@
    var chart_1_data_1 = document.getElementById('chart_1_data_1').innerHTML;
    var chart_1_data_2 = document.getElementById('chart_1_data_2').innerHTML;
    var chart_1_data_3 = document.getElementById('chart_1_data_3').innerHTML;
-   var chart_1_data_4 = document.getElementById('chart_1_data_4').innerHTML;
 
    var chart_2_data_1 = document.getElementById('chart_2_data_1').innerHTML;
    var chart_2_data_2 = document.getElementById('chart_2_data_2').innerHTML;
-   var chart_2_data_3 = document.getElementById('chart_2_data_3').innerHTML;
 
 
-   var heighty = parseInt(chart_2_data_1) + parseInt(chart_2_data_2) + parseInt(chart_2_data_3);
+   var heighty = parseInt(chart_2_data_1) + parseInt(chart_2_data_2);
    heighty = 0 - 55 - (heighty*2);
    if (heighty < -190) {
        heighty = -185;
@@ -61,11 +59,11 @@
 
     // The data for our dataset
     data: {
-        labels: ['%', '%', '%', '%'],
+        labels: ['%', '%', '%'],
         datasets: [{
-            backgroundColor: [ '#9400d3', '#d342ff', '#ff99ff', '#ccc' ],
+            backgroundColor: [ '#9400d3', '#ff99ff', '#ccc' ],
             borderColor: 'rgb(255, 255, 255)',
-            data: [chart_1_data_1, chart_1_data_2, chart_1_data_3, chart_1_data_4],
+            data: [chart_1_data_1, chart_1_data_2, chart_1_data_3],
 
         }],
     },
@@ -112,11 +110,6 @@
          {
            label: '%',
            data: [chart_2_data_2],
-           backgroundColor: '#d342ff' // yellow
-         },
-         {
-           label: '%',
-           data: [chart_2_data_3],
            backgroundColor: '#ff99ff' // yellow
          }]
 

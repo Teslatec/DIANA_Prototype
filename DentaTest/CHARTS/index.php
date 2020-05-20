@@ -22,7 +22,7 @@
       <div class="col-xs-8 left_block">
                   <!-- first title row -->
                   <div class="row left_block_1">
-                     <h5>Текст, текст, текст</h5>
+                     <h5><!--There will be name and hashsum--></h5>
                   </div>
                   <!-- doughnut chart and select row -->
                   <div class="row left_block_2">
@@ -37,7 +37,7 @@
                               <div class="row" style="height:175px;margin: 10px auto 0;">
                                  <canvas id="myChart"></canvas>
                               </div>
-                              <div class="donut-inner"><h5>99%</h5></div>
+                              <div class="donut-inner"><h5><?= $longterm_index ?>%</h5></div>
                            </div>
                            <!-- select row -->
                            <div class="col-xs-6 left_block_col2">
@@ -51,8 +51,8 @@
                                        <h2 style="margin: 5px auto;line-height: 35px;">3</h2>
                                     </div>
                                     <div class="col-xs-9" style="padding: 5px 10px;height: 45px;">
-                                       <h4 style="font-size: 14px;text-align:left;line-height: 20px;">Текст текст текст </h4>
-                                       <p style="line-height: 15px;">текст текст текст текст</p>
+                                       <h4 style="font-size: 14px;text-align:left;line-height: 20px;">Высокий риск</h4>
+                                       <p style="line-height: 15px;">заболеваний полости рта</p>
                                     </div>
                                  </div>
                                  <!-- yellow select row -->
@@ -61,8 +61,8 @@
                                        <h2 style="margin: 5px auto;line-height: 35px;">2</h2>
                                     </div>
                                     <div class="col-xs-9" style="padding: 5px 10px;height: 45px;">
-                                       <h4 style="font-size: 14px;text-align:left;line-height: 20px;">Текст текст текст </h4>
-                                       <p style="line-height: 15px;">текст текст текст текст</p>
+                                       <h4 style="font-size: 14px;text-align:left;line-height: 20px;">Средний риск</h4>
+                                       <p style="line-height: 15px;">заболеваний полости рта</p>
                                     </div>
                                  </div>
                                  <!-- green select row -->
@@ -71,8 +71,8 @@
                                        <h2 style="margin: 5px auto;line-height: 35px;">1</h2>
                                     </div>
                                     <div class="col-xs-9" style="padding: 5px 10px;height: 45px;">
-                                       <h4 style="font-size: 14px;text-align:left;line-height: 20px;">Текст текст текст </h4>
-                                       <p style="line-height: 15px;">текст текст текст текст</p>
+                                       <h4 style="font-size: 14px;text-align:left;line-height: 20px;">Низкий риск</h4>
+                                       <p style="line-height: 15px;">заболеваний полости рта</p>
                                     </div>
 
                                  </div>
@@ -85,28 +85,22 @@
                           <p style="font-size:12px;padding-left:10px;">Оценка времени образования зубного налета:</p>
                        </div>
                        <div class="row" style="padding:0 0 0 10px;">
-                           <div class="col-xs-3" style="width:122.5px;">
+                           <div class="col-xs-3" style="width:163.3px;">
                               <div class="col-xs-2" style="height:15px;width:10px;background:#9400d3;margin:0;padding:0;"></div>
-                              <div class="col-xs-10" style="border-bottom:2px solid #9400d3;height:15px;width:112.5px;">
-                                 <p style="line-height: 12px;margin-left: 5px;font-size:10px;">##% - месяц</p>
+                              <div class="col-xs-10" style="border-bottom:2px solid #9400d3;height:15px;width:153px;">
+                                 <p style="line-height: 12px;margin-left: 5px;font-size:10px;"><?= $longterm_index ?>% - более недели</p>
                               </div>
                            </div>
-                           <div class="col-xs-3" style="width:122.5px;">
-                              <div class="col-xs-2" style="height:15px;width:10px;background:#d342ff;margin:0;padding:0;"></div>
-                              <div class="col-xs-10" style="border-bottom:2px solid #d342ff;height:15px;width:112.5px;">
-                                 <p style="line-height: 12px;margin-left: 5px;font-size:10px;">##% - неделя</p>
-                              </div>
-                           </div>
-                           <div class="col-xs-3" style="width:122.5px;">
+                           <div class="col-xs-3" style="width:163.3px;">
                               <div class="col-xs-2" style="height:15px;width:10px;background:#ff99ff;margin:0;padding:0;"></div>
-                              <div class="col-xs-10" style="border-bottom:2px solid #ff99ff;height:15px;width:112.5px;">
-                                 <p style="line-height: 12px;margin-left: 5px;font-size:10px;">##% - сутки</p>
+                              <div class="col-xs-10" style="border-bottom:2px solid #ff99ff;height:15px;width:153px;">
+                                 <p style="line-height: 12px;margin-left: 5px;font-size:10px;"><?= $daily_index ?>% - сутки</p>
                               </div>
                            </div>
-                           <div class="col-xs-3" style="width:122.5px;">
+                           <div class="col-xs-3" style="width:163.3px;">
                               <div class="col-xs-2" style="height:15px;width:10px;background:#cccccc;margin:0;padding:0;"></div>
-                              <div class="col-xs-10" style="border-bottom:2px solid #cccccc;height:15px;width:112.5px;">
-                                 <p style="line-height: 12px;margin-left: 5px;font-size:10px;">##% - не обнаружен</p>
+                              <div class="col-xs-10" style="border-bottom:2px solid #cccccc;height:15px;width:153px;">
+                                 <p style="line-height: 12px;margin-left: 5px;font-size:10px;"><?= $pure_index ?>% - чисто</p>
                               </div>
                            </div>
                        </div>
@@ -134,18 +128,33 @@
                            <div class="bar-under"><h5>ДД/ММ/ГГГГ</h5></div>
 
                         </div>
-                        <div class="bar-inner" id="bar-inner"><h5>##%</h5></div>
+                        <div class="bar-inner" id="bar-inner"><h5><?= $longterm_index ?>%</h5></div>
                      </div>
                      <div class="col-xs-6" style="height:250px;width:230px;margin: 0;">
-                        <h4 style="margin: 15px auto 10px;font-size:14px;">Группа риска №#</h4>
-                        <p class="riskgroup_p">Текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст.</p>
-                        <p class="riskgroup_p">Текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст.</p>
-                        <p class="riskgroup_p">Текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст, текст</p>
+                        <h4 style="margin: 15px auto 10px;font-size:14px;">Группа риска №<?= $category_id ?></h4>
+                        <?php switch ($category_id) : case 1: ?>
+                           <p class="riskgroup_p">
+                              Количество зубного налёта менее 15%.
+                              Низкая вероятность возникновения заболевания полости рта.
+                           </p>
+                        <?php break; case 2 : ?>
+                           <p class="riskgroup_p">
+                              Количество зубного налёта от 16% до 50%.
+                              Средняя вероятность возникновения заболевания полости рта.
+                           </p>
+                        <?php break; case 3 : ?>
+                           <p class="riskgroup_p">
+                              Количество зубного налёта более 50%.
+                              Высокая вероятность возникновения заболевания полости рта.
+                           </p>
+                        <?php break; endswitch; ?> 
                      </div>
                   </div>
                   <!-- upperlined text row -->
                   <div class="row row13">
-                     <p>текст, текст, текст, текст, текст, текст, текст, текст, текст, текст</p>
+                     <p>Результаты расчёта не являются диагнозом
+                        или медицинской рекомендацией и не
+                        исключают консультации с врачом</p>
                   </div>
             </div>
       <!-- right block -->
@@ -166,7 +175,7 @@
                   </div>
                   <!-- upperlined text row -->
                   <div class="row right_block_5">
-                     <p>текст, текст, текст, текст, текст</p>
+                     <p>Identified by Diana&trade; – Dental Index Analysis Application</p>
                   </div>
             </div>
    </div>
@@ -179,20 +188,18 @@
       <div class="row footer__back" style="margin:20px auto;height:100px;width:100%;">
         <div class="col-xs-4">
             <h5>Переключатели</h5>
-            <h5 id="selectors">3</h5>
+            <h5 id="selectors"><?= $category_id ?></h5>
         </div>
         <div class="col-xs-4">
            <h5>График 1</h5>
-            <h5 id="chart_1_data_1">30</h5>
-            <h5 id="chart_1_data_2">10</h5>
-            <h5 id="chart_1_data_3">10</h5>
-            <h5 id="chart_1_data_4">60</h5>
+            <h5 id="chart_1_data_1"><?= $longterm_index ?></h5>
+            <h5 id="chart_1_data_2"><?= $daily_index ?></h5>
+            <h5 id="chart_1_data_3"><?= $pure_index ?></h5>
         </div>
         <div class="col-xs-4">
            <h5>График 2</h5>
             <h5 id="chart_2_data_1">30</h5>
             <h5 id="chart_2_data_2">20</h5>
-            <h5 id="chart_2_data_3">10</h5>
         </div>
 
 
