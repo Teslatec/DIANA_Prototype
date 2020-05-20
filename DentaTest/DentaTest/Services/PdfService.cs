@@ -45,10 +45,19 @@ namespace DentaTest.Infrastructure
                 category = 3;
             }
 
+            DateTime foo = DateTime.UtcNow;
+            long unixTime = ((DateTimeOffset)foo).ToUnixTimeSeconds();
+
             // FIXME: somebody break up arguments string, I don't know how
-            string phpArguments = String.Format("-d auto_prepend_file=prepend.php index.php daily_index={0} longterm_index={1} pure_index={2} category_id={3}",
-                                                daily, longTerm,
-                                                pure, category);
+            string phpArguments = String.Format("-d auto_prepend_file=prepend.php " +
+                                                "index.php " +
+                                                "daily_index={0} " +
+                                                "longterm_index={1} " +
+                                                "pure_index={2} " +
+                                                "category_id={3} " +
+                                                "timestamp={4} ",
+                                                daily, longTerm, pure,
+                                                category, unixTime);
             using System.Diagnostics.Process phpProcess = new System.Diagnostics.Process();
             phpProcess.StartInfo.FileName = "/usr/bin/php";
             phpProcess.StartInfo.Arguments = phpArguments;

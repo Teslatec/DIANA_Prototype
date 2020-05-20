@@ -125,7 +125,7 @@
                         </div>
                         <div class="row barchart" style="width:230px;height:200px;margin:0 auto;">
                            <canvas id="myChart2"></canvas>
-                           <div class="bar-under"><h5>ДД/ММ/ГГГГ</h5></div>
+                           <div class="bar-under"><h5><?= date("d/m/Y", $timestamp) ?></h5></div>
 
                         </div>
                         <div class="bar-inner" id="bar-inner"><h5><?= $longterm_index ?>%</h5></div>
@@ -161,7 +161,7 @@
       <div class="col-xs-4 right_block">
                   <!-- first row with date/time -->
                   <div class="row right_block_1">
-                     <h4>12.05.2020 / 12:34:56</h4>
+                     <h4><?= date("d.m.Y / H:i:s", $timestamp) ?></h4>
                   </div>
                   <!-- three image's rows -->
                   <div class="row right_block_2">
