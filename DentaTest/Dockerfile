@@ -19,7 +19,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
                         ttf-mscorefonts-installer \
                         fonts-crosextra-carlito \
                         fonts-crosextra-caladea \
-                        php7.3-cli
+                        php7.3-cli \
+                        wkhtmltopdf
 
 COPY logo.png /app/
 COPY CHARTS /app/CHARTS/
