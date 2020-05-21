@@ -180,6 +180,17 @@
             </div>
    </div>
    <!--   ОСНОВНОЙ БЛОК   -->
+
+
+
+<!--   забивка пространства   -->
+   <div class="row footer">
+      <div class="row footer__back" style="margin:20px auto;height:100px;width:100%;">
+      </div>
+   </div>
+<!--   забивка пространства   -->
+
+
 </body>
 <!--   .JS, script & etc   -->
 <?php require_once 'header/metafoot.php'; ?>
