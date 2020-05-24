@@ -28,7 +28,7 @@ def process_request(model, purity_config, workdir, json_object):
 
         image_path_in = os.path.join(workdir, filename)
         basename = os.path.basename(filename)
-        filename_out = os.path.splitext(basename)[0] + "_out.png"
+        filename_out = os.path.splitext(basename)[0] + ".png"
         image_path_out = os.path.join(workdir, OUTPUT_DIR, filename_out)
 
         image_paths_in.append(image_path_in)
@@ -38,17 +38,19 @@ def process_request(model, purity_config, workdir, json_object):
 
     purity_index = tooth.process_file_list(model, image_paths_in, image_paths_out,
                                            purity_config)
-    return {
+    result =  {
         "id": json_object["id"],
         "image": filenames_out,
         "index": purity_index,
     }
+    print("Finished processing. Results:", result)
+    return result
 
 def mq_callback(model, purity_config, image_dir,
                 channel, method, properties, body):
     message = json.loads(body)
     
-    print(message)  
+    print("New request:", message)  
     
     answer = process_request(model, purity_config, image_dir, message)
     

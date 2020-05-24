@@ -11,26 +11,10 @@ import sys
 import datetime
 
 def apply_color_splash(image, mask, rois):
-    """Apply color splash effect.
-    image: RGB image [height, width, 3]
-    mask: instance segmentation mask [height, width, instance count]
-
-    Returns result image.
-    """
-    # Make a grayscale copy of the image. The grayscale copy still
-    # has 3 RGB channels, though.
-    gray = skimage.color.gray2rgb(skimage.color.rgb2gray(image)) * 255
-    # Copy color pixels from the original color image where mask is set
-    if mask.shape[-1] > 0:
-        # We're treating all instances as one, so collapse the mask into one layer
-        mask = (np.sum(mask, -1, keepdims=True) >= 1)
-        splash = np.where(mask, image, gray).astype(np.uint8)
-    else:
-        splash = gray.astype(np.uint8)
-
+    result = np.copy(image)
     for i in range(0, rois.shape[0]):
-        mrcnn.visualize.draw_box(splash, rois[i], (0, 192, 0))
-    return splash
+        mrcnn.visualize.draw_box(result, rois[i], (0, 192, 0))
+    return result
 
 def calculate_every_dirtyness(purity_class, image, masks, rois):
     results = []
