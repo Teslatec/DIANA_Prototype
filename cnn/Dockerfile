@@ -15,14 +15,16 @@ RUN git clone -b master --depth 1 https://github.com/matterport/Mask_RCNN \
 
 RUN pip3 install --no-cache-dir \
                  grpcio==1.25.0 \
-                 ipython \
+                 ipython==7.13.0 \
                  Keras==2.1.5 \
                  Keras-Applications==1.0.8 \
                  Keras-Preprocessing==1.1.0 \
-                 opencv-python \
+                 opencv-python==4.2.0.34 \
                  tensorflow==1.14 \
-                 scikit-image \
-                 imantics
+                 scikit-image==0.16.2 \
+                 imantics==0.1.12 \
+                 numpy==1.18.3 \
+                 pika
 
 ENV PYTHONPATH /usr/local/src/Mask_RCNN
 COPY tooth_weights.h5 /app
@@ -39,4 +41,5 @@ VOLUME /app/config
 CMD python3 /app/tooth_service.py \
     --tooth=/app/tooth_weights.h5 \
     --brace=brace_weights.h5 --image=/images/ \
-    --purity /app/config/purity.ini
+    --purity=/app/config/purity.ini \
+    --rabbit=$RABBIT_URL

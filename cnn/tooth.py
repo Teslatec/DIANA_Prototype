@@ -160,7 +160,7 @@ def load_images(paths_in, paths_out):
             valid_paths_out.append(path_out)
         except:
             # Image decoding fail: print error
-            print("Failed to read {}".format(path))
+            print("Failed to read {}".format(path_in))
     return images, valid_paths_out
 
 def process_file_list(model, image_paths_in, image_paths_out,

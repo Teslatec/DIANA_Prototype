@@ -1,9 +1,10 @@
 import tooth
-import socketserver
 import json
 import os
 import sys
 import configparser
+import pika
+import functools
 
 def process_request(model, purity_config, workdir, json_object):
     if not isinstance(json_object, dict):
@@ -18,21 +19,9 @@ def process_request(model, purity_config, workdir, json_object):
     filenames_in = []
     filenames_out = []
 
-    for image_desc in json_object["Images"]:
-        if not isinstance(image_desc, dict):
-            print("Image desc is not dict, but", type(image_desc))
-            sys.stdout.flush()
-            continue
-
-        filename = image_desc.get("Name", None)
-        if filename is None:
-            print("Missing filename property")
-            sys.stdout.flush()
-            continue
-
-        if "/" in filename or "\\" in filename or ".." in filename:
+    for filename in json_object["images"]:
+        if ".." in filename:
             print("Invalid filename \"{}\"".format(filename))
-            sys.stdout.flush()
             continue
 
         image_path_in = os.path.join(workdir, filename)
@@ -46,7 +35,8 @@ def process_request(model, purity_config, workdir, json_object):
         filenames_in.append(filename)
         filenames_out.append(filename_out)
         print("Image path: ", image_path_in)
-        sys.stdout.flush()
+        print("Image path out: ", image_path_out)
+        print("Output filename:", filename_out)
 
     purity_index = tooth.process_file_list(model, image_paths_in, image_paths_out,
                                            purity_config)
@@ -54,52 +44,25 @@ def process_request(model, purity_config, workdir, json_object):
     sys.stdout.flush()
 
     return {
-        "purity_index": purity_index,
-        "images": list(map(lambda finout: {"in": finout[0], "out": finout[1]},
-                           zip(filenames_in, filenames_out)))
+        "id": json_object["id"],
+        "image": filenames_out,
+        "index": purity_index,
     }
 
-class TCPHandler(socketserver.BaseRequestHandler):
-    def handle(self):
-        model = self.server.model
-        purity_config = self.server.purity_config
-        image_dir = self.server.image_dir
-        json_object = None
-        data = bytearray()
 
-        while True:
-            new_data = self.request.recv(4096)
-            if len(new_data) == 0:
-                print("Failed to parse JSON data")
-                sys.stdout.flush()
-                break
-
-            data.extend(new_data)
-
-            try:
-                json_object = json.loads(data)
-                break;
-            except ValueError:
-                continue
-
-        result = process_request(model, purity_config, image_dir, json_object)
-        result_buf = json.dumps(result).encode()
-        self.request.sendall(result_buf)
-
-def run_server(model, purity_config, port, image_dir):
-    if not os.path.isdir(image_dir):
-        print("\"{}\" is not a directory".format(image_dir))
-        sys.stdout.flush()
-        return
-
-    server = socketserver.TCPServer(('', port), TCPHandler)
-    server.model = model
-    server.purity_config = purity_config
-    server.image_dir = image_dir
-
-    print("Listening TCP port {}".format(port))
-    sys.stdout.flush()
-    server.serve_forever()
+def mq_callback(model, purity_config, image_dir,
+                channel, method, properties, body):
+    message = json.loads(body)
+    
+    print(message)  
+    
+    answer = process_request(model, purity_config, image_dir, message)
+    
+    queue = 'answer-image'
+    channel.queue_declare(queue=queue)      
+    channel.basic_publish(exchange='', routing_key=queue, body=json.dumps(answer))
+    
+    channel.basic_ack(delivery_tag=method.delivery_tag)
 
 if __name__ == '__main__':
     import argparse
@@ -119,14 +82,23 @@ if __name__ == '__main__':
     parser.add_argument('--image', required=True,
                         metavar="path or URL to image",
                         help='Image to apply the color splash effect on')
-    parser.add_argument('--output', required=False,
-                        metavar="<output_dir>",
-                        help='Output directory')
+    parser.add_argument('--rabbit', required=True,
+                        metavar="RabbiMQ URL for getting images",)
     args = parser.parse_args()
 
     model = tooth.tooth_model_init(args.tooth, args.brace)
 
     purity_config = configparser.ConfigParser()
     purity_config.read(args.purity)
+    
+    params = pika.URLParameters(args.rabbit)                                 
+    connection = pika.BlockingConnection(params)                                
+    channel = connection.channel()
+    queue="image-test"
+    channel.queue_declare(queue=queue, durable=True)
+    channel.basic_qos(prefetch_count=1)
+    callback = functools.partial(mq_callback, model,
+                                 purity_config, args.image)
+    channel.basic_consume(on_message_callback=callback, queue=queue)
+    channel.start_consuming()
 
-    run_server(model, purity_config, image_dir=args.image, port=8888)
