@@ -85,10 +85,15 @@ def save_tooth_images(source_image, masks, rois):
 def cut_braces_from_teeth(tooth_masks, brace_masks):
     result = np.copy(tooth_masks)
 
+    total_cut_area = 0
+
     for t in range(tooth_masks.shape[-1]):
+        area_before = np.sum(results[:,:,t])
         for b in range(brace_masks.shape[-1]):
             result[:,:,t] = np.logical_and(result[:,:,t],
                                            np.logical_not(brace_masks[:,:,b]))
+        area_after = np.sum(results[:,:,t])
+        total_cut_area += (area_before - area_after)
     return result
 
 def sum_purity_results(purity_results):
@@ -111,10 +116,16 @@ def process_images(model, images, purity_class, inspect):
         tooth_result = model['tooth'].detect([image], verbose=0)[0]
         brace_result = model['brace'].detect([image], verbose=0)[0]
 
-        tooth_mask_cut = cut_braces_from_teeth(tooth_result['masks'], brace_result['masks'])
+        if brace_result.shape[-1] >= 5:
+            tooth_mask_cut, cut_area = cut_braces_from_teeth(tooth_result['masks'], brace_result['masks'])
+        else:
+            tooth_mask_cut, cut_area = tooth_result['masks'], 0
 
-        results.extend(calculate_every_dirtyness(purity_class, image,
-                                                 tooth_mask_cut, tooth_result['rois']))
+        per_tooth_results = calculate_every_dirtyness(purity_class, image,
+                                                      tooth_mask_cut, tooth_result['rois'])
+
+        current_image_result = sum_purity_results(per_tooth_results)
+        current_image_result['total'] += cut_area
 
         splash = apply_color_splash(image, tooth_result['masks'],
                                     tooth_result['rois'])
