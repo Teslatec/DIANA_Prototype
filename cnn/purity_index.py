@@ -167,27 +167,28 @@ class PurityIndex:
 
     def get_purity_index(self, tooth_purty_pixel):
 
-        day_persent = (1 - (tooth_purty_pixel['total'] - tooth_purty_pixel['s']) / tooth_purty_pixel['total']) 
-        day_index = self.get_day_plaque_index(day_persent)
+        day_percentage = tooth_purty_pixel['s'] / tooth_purty_pixel['total']
+        day_index = self.get_day_plaque_index(day_percentage)
 
-        week_persent = (1 - (tooth_purty_pixel['total'] - tooth_purty_pixel['m']) / tooth_purty_pixel['total']) 
-        week_index = self.get_week_plaque_index(week_persent)
+        week_percentage = tooth_purty_pixel['m'] / tooth_purty_pixel['total']
+        week_index = self.get_week_plaque_index(week_percentage)
 
-        month_persent = (1 - (tooth_purty_pixel['total'] - tooth_purty_pixel['h']) / tooth_purty_pixel['total'])
-        month_index = self.get_month_plaque_index(month_persent)
+        month_percentage = tooth_purty_pixel['h'] / tooth_purty_pixel['total']
+        month_index = self.get_month_plaque_index(month_percentage)
 
         matrix = [month_index, week_index, day_index]
+        total = day_percentage + month_percentage + week_percentage
 
         return {
-            'color': self.get_total_color(matrix),
+            'color': self.get_total_color(matrix, total),
             'matrix' : matrix,
-            'day': day_persent,
-            'week': week_persent,
-            'month': month_persent,             
+            'day': day_percentage,
+            'week': week_percentage,
+            'month': month_percentage,             
         }    
 
     
-    def get_total_color(self, total_matrix):
+    def get_total_color(self, total_matrix, total):
 
         green = [
                 [3,3,3],
@@ -210,7 +211,10 @@ class PurityIndex:
             ]
 
         if (total_matrix in green):
-            return 'green'
+            if total <= 0.1:
+                return 'green'
+            else:
+                return 'yellow'
         elif (total_matrix in red):
             return 'red'
 
