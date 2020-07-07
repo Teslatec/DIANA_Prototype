@@ -1,5 +1,6 @@
 FROM ubuntu:18.04
 WORKDIR '/app'
+
 RUN apt-get update && apt-get install --no-install-recommends -y \
                         git \
                         python3 \
@@ -27,13 +28,10 @@ RUN pip3 install --no-cache-dir \
                  pika
 
 ENV PYTHONPATH /usr/local/src/Mask_RCNN
-COPY tooth_weights.h5 /app
-COPY brace_weights.h5 /app
-COPY tooth.py /app
-COPY tooth_service.py /app
-COPY tooth_cli.py /app
-COPY tooth_test.py /app
-COPY purity_index.py /app
+COPY tooth_weights.h5 brace_weights.h5 weights_md5.txt /app/
+RUN md5sum -c weights_md5.txt
+
+COPY tooth.py tooth_service.py tooth_test.py purity_index.py /app/
 
 VOLUME /images
 VOLUME /app/config
