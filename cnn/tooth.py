@@ -116,7 +116,7 @@ def process_images(model, images, purity_class, inspect):
         tooth_result = model['tooth'].detect([image], verbose=0)[0]
         brace_result = model['brace'].detect([image], verbose=0)[0]
 
-        if brace_result.shape[-1] >= 5:
+        if brace_result['masks'].shape[-1] >= 5:
             tooth_mask_cut, cut_area = cut_braces_from_teeth(tooth_result['masks'], brace_result['masks'])
         else:
             tooth_mask_cut, cut_area = tooth_result['masks'], 0
@@ -126,6 +126,7 @@ def process_images(model, images, purity_class, inspect):
 
         current_image_result = sum_purity_results(per_tooth_results)
         current_image_result['total'] += cut_area
+        results.append(current_image_result)
 
         splash = apply_color_splash(image, tooth_result['masks'],
                                     tooth_result['rois'])
