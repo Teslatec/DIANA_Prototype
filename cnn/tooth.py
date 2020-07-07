@@ -88,13 +88,13 @@ def cut_braces_from_teeth(tooth_masks, brace_masks):
     total_cut_area = 0
 
     for t in range(tooth_masks.shape[-1]):
-        area_before = np.sum(results[:,:,t])
+        area_before = np.sum(result[:,:,t])
         for b in range(brace_masks.shape[-1]):
             result[:,:,t] = np.logical_and(result[:,:,t],
                                            np.logical_not(brace_masks[:,:,b]))
-        area_after = np.sum(results[:,:,t])
+        area_after = np.sum(result[:,:,t])
         total_cut_area += (area_before - area_after)
-    return result
+    return result, total_cut_area
 
 def sum_purity_results(purity_results):
     return {
