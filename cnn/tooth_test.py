@@ -135,11 +135,16 @@ def save_tooth_images(source_image, masks, rois):
 def cut_braces_from_teeth(tooth_masks, brace_masks):
     result = np.copy(tooth_masks)
 
+    total_cut_area = 0
+
     for t in range(tooth_masks.shape[-1]):
+        area_before = np.sum(result[:,:,t])
         for b in range(brace_masks.shape[-1]):
             result[:,:,t] = np.logical_and(result[:,:,t],
                                            np.logical_not(brace_masks[:,:,b]))
-    return result
+        area_after = np.sum(result[:,:,t])
+        total_cut_area += (area_before - area_after)
+    return result, total_cut_area
 
 def draw_purity_index(image, purity_index):
     index_str = "M: %3.0f%% W: %3.0f%% D: %3.0f%% %s %s" % \
@@ -201,15 +206,22 @@ def process_images(model, images, purity_class, inspect):
         tooth_result = model['tooth'].detect([image], verbose=0)[0]
         brace_result = model['brace'].detect([image], verbose=0)[0]
 
-        tooth_mask_cut = cut_braces_from_teeth(tooth_result['masks'], brace_result['masks'])
+        if brace_result['masks'].shape[-1] >= 5:
+            tooth_mask_cut, cut_area = cut_braces_from_teeth(tooth_result['masks'], brace_result['masks'])
+            print("Cut area", cut_area)
+        else:
+            tooth_mask_cut, cut_area = tooth_result['masks'], 0
+            print("Less than 5 braces detected")
 
         results_braces_applied = calculate_every_dirtyness(purity_class, image,
                                                            tooth_mask_cut, tooth_result['rois'])
+        results_braces_sum = sum_purity_results(results_braces_applied)
+        results_braces_sum['total'] += cut_area
         dirtyness_list_braces_applied = [((r['s'] + r['m'] + r['h'])) / r['total']
                                          for r in results_braces_applied
                                          if r['total'] != 0]
         dirtyness_braces_applied = np.average(dirtyness_list_braces_applied)
-        index_braces_applied = purity_class.get_purity_index(sum_purity_results(results_braces_applied))
+        index_braces_applied = purity_class.get_purity_index(results_braces_sum)
         splash_braces_applied = apply_color_splash2(image, tooth_result['rois'],
                                                     [r['image'] for r in results_braces_applied],
                                                     index_total(index_braces_applied),
