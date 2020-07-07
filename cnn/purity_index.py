@@ -192,8 +192,6 @@ class PurityIndex:
 
         green = [
                 [3,3,3],
-                [3,3,2],
-                [2,3,3]           
             ]
 
         red = [
@@ -207,7 +205,14 @@ class PurityIndex:
                 [1,3,1],
                 [1,3,3],
                 [2,1,1],
-                [2,1,2]
+                [2,1,2],
+                [2,2,2],
+                [3,2,2],
+                [3,1,1],
+                [3,1,2],
+                [2,1,3],
+                [2,2,1],
+                [2,3,1],
             ]
 
         if (total_matrix in green):
@@ -223,32 +228,32 @@ class PurityIndex:
 
     def get_day_plaque_index(self, percent):
 
-        percent = percent*100
-        if (0 <= percent < 20):
+        percent = round(percent*100)
+        if percent <= 10:
             return 3
-        elif(20 < percent < 50):
+        elif percent <= 45:
             return 2
-        elif(50 <= percent):
+        else:
             return 1     
 
 
     def get_week_plaque_index(self, percent):
 
-        percent = percent*100
-        if (0 <= percent < 5):
+        percent = round(percent*100)
+        if percent <= 5:
             return 3
-        elif(5 < percent < 25):
+        elif percent <= 20:
             return 2
-        elif(25 <= percent):
+        else:
             return 1       
 
 
     def get_month_plaque_index(self, percent):
 
-        percent = percent*100   
-        if (0 <= percent < 0.1):
+        percent = round(percent*100)
+        if (percent <= 0):
             return 3
-        elif(0.1 < percent < 5):
+        elif percent <= 5:
             return 2
-        elif(5 <= percent):
+        else:
             return 1   
