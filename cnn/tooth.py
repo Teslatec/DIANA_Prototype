@@ -10,6 +10,9 @@ import os
 import sys
 import datetime
 
+# Used only for making test collages
+import cv2
+
 def apply_color_splash(image, mask, rois):
     result = np.copy(image)
     for i in range(0, rois.shape[0]):
@@ -107,7 +110,98 @@ def sum_purity_results(purity_results):
 def index_total(purity_index):
     return purity_index['day']  + purity_index['week'] + purity_index['month']
 
-def process_images(model, images, purity_class, inspect):
+def draw_purity_index(image, purity_index):
+    index_str = "M: %3.0f%% W: %3.0f%% D: %3.0f%% %s %s" % \
+                (purity_index['month'] * 100, purity_index['week'] * 100,
+                    purity_index['day'] * 100, purity_index['color'],
+                    str(purity_index['matrix']))
+    cv2.putText(image, index_str, (0, 80),
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+
+def make_test_collage_image(image, rois, plaque_images, dirtyness, purity_index):
+    result = np.copy(image)
+
+    for i in range(rois.shape[0]):
+        tooth = result[rois[i][0]:rois[i][2], rois[i][1]:rois[i][3]]
+
+        plaque = plaque_images[i]
+
+        mask = np.logical_or(np.all(plaque == (255, 255, 255), axis=2),
+                             np.all(plaque == (255, 229, 204), axis=2))
+        mask = mask.reshape(mask.shape + (1,));
+        tooth[:] = np.where(mask, tooth, plaque)
+    cv2.putText(result, "%.2f%%" % (dirtyness * 100), (0, 30),
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+
+    if purity_index is not None:
+        draw_purity_index(result, purity_index)
+
+    return result
+
+def calculate_tooth_dirtyness_old(image, mask):
+    shape = image.shape;
+    dirty_count = 0
+    all_count = 0
+    splash = np.ndarray(image.shape, image.dtype)
+    for row in range(shape[0]):
+        for col in range(shape[1]):
+            if mask[row, col]:
+                r, g, b = image[row, col]
+                if (3 < r < 186) and (17 < g < 75) and (37 < b < 160):
+                    dirty_count += 1
+                    splash[row, col] = (255, 102, 217)
+                else:
+                    splash[row, col] = (r, g, b)
+                all_count += 1
+            else:
+                splash[row, col] = (255, 255, 255)
+                
+    return float(dirty_count) / float(all_count), splash
+
+def calculate_jaw_dirtyness_old(image, masks, rois):
+    results = []
+    splashes = []
+    for i in range(masks.shape[2]):
+        tooth_image = image[rois[i][0]:rois[i][2], rois[i][1]:rois[i][3]]
+        tooth_mask = masks[rois[i][0]:rois[i][2], rois[i][1]:rois[i][3], i]
+        dirtyness, splash = calculate_tooth_dirtyness_old(tooth_image, tooth_mask)
+        results.append(dirtyness)
+        splashes.append(splash)
+    return np.average(results), splashes
+
+def combine_pictures(image1, image2, image3, image4):
+    result = np.ndarray((image1.shape[0] * 2, image1.shape[1] * 2, image1.shape[2]),
+                        image1.dtype)
+    result[:image1.shape[0],:image1.shape[1],:] = image1
+    result[:image1.shape[0],image1.shape[1]:,:] = image2
+    result[image1.shape[0]:,:image1.shape[1],:] = image3
+    result[image1.shape[0]:,image1.shape[1]:,:] = image4
+    return result
+
+def make_test_collage(purity_class, image, tooth_result, brace_result, tooth_mask_cut,
+                      with_braces_result, with_braces_plaque_images):
+    with_braces_index = purity_class.get_purity_index(with_braces_result)
+    with_braces_image = make_test_collage_image(image, tooth_result['rois'],
+                                                with_braces_plaque_images,
+                                                index_total(with_braces_index),
+                                                with_braces_index)
+
+    no_braces_results = calculate_every_dirtyness(purity_class, image,
+                                                  tooth_result['masks'], tooth_result['rois'])
+    no_braces_index = purity_class.get_purity_index(sum_purity_results(no_braces_results))
+    no_braces_image = make_test_collage_image(image, tooth_result['rois'],
+                                              [r['image'] for r in no_braces_results],
+                                              index_total(no_braces_index),
+                                              no_braces_index)
+
+    old_algorithm_dirtyness, old_algorithm_plaque = calculate_jaw_dirtyness_old(image, tooth_result['masks'],
+                                                                                tooth_result['rois'])
+    old_algorithm_image = make_test_collage_image(image, tooth_result['rois'],
+                                                  old_algorithm_plaque, old_algorithm_dirtyness,
+                                                  None)
+    return combine_pictures(image, old_algorithm_image, no_braces_image, with_braces_image)
+    
+def process_images(model, images, purity_class, inspect, make_test_image = False):
     splashes = []
     results = []
 
@@ -128,8 +222,14 @@ def process_images(model, images, purity_class, inspect):
         current_image_result['total'] += cut_area
         results.append(current_image_result)
 
-        splash = apply_color_splash(image, tooth_result['masks'],
-                                    tooth_result['rois'])
+        if not make_test_image:
+            splash = apply_color_splash(image, tooth_result['masks'],
+                                        tooth_result['rois'])
+        else:
+            splash = make_test_collage(purity_class, image, tooth_result, brace_result,
+                                       tooth_mask_cut, current_image_result,
+                                       [r['image'] for r in per_tooth_results])
+
         splashes.append(splash)
         if inspect:
             save_tooth_images(image, tooth_mask_cut, tooth_result['rois']);
@@ -168,7 +268,7 @@ def process_file_list(model, image_paths_in, image_paths_out,
 
     purity_class = PurityIndex(configuration)
 
-    splashes, dirtyness = process_images(model, images, purity_class, inspect)
+    splashes, dirtyness = process_images(model, images, purity_class, inspect, inspect)
     for splash, image_path_out in zip(splashes, image_paths_out):
         skimage.io.imsave(image_path_out, splash, compress_level=1)
     return dirtyness
