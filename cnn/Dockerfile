@@ -31,7 +31,7 @@ ENV PYTHONPATH /usr/local/src/Mask_RCNN
 COPY tooth_weights.h5 brace_weights.h5 weights_md5.txt /app/
 RUN md5sum -c weights_md5.txt
 
-COPY tooth.py tooth_service.py tooth_test.py purity_index.py /app/
+COPY tooth.py tooth_service.py tooth_test.py purity_index.py tooth_cli.py /app/
 
 VOLUME /images
 VOLUME /app/config
