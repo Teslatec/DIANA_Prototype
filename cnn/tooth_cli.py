@@ -1,4 +1,4 @@
-import tooth_test
+import tooth as tooth
 import os
 import configparser
 
@@ -25,7 +25,7 @@ if __name__ == '__main__':
                         help='Output directory')
     args = parser.parse_args()
 
-    model = tooth_test.tooth_model_init(args.tooth, args.brace)
+    model = tooth.tooth_model_init(args.tooth, args.brace)
 
     paths_in_unfiltered = []
     paths_in = []
@@ -62,6 +62,6 @@ if __name__ == '__main__':
     config.read(args.purity)
 
     for path_in, path_out in zip(paths_in, paths_out):
-        dirtyness = tooth_test.process_file_list(model, [path_in], [path_out],
-                                                 config, inspect = True)
+        dirtyness = tooth.process_file_list(model, [path_in], [path_out],
+                                            config, inspect = True)
         print(path_in, dirtyness)
