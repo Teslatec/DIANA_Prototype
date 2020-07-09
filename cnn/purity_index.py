@@ -207,23 +207,32 @@ class PurityIndex:
                 [2,1,1],
                 [2,1,2],
                 [2,2,2],
-                [3,2,2],
                 [3,1,1],
                 [3,1,2],
                 [2,1,3],
                 [2,2,1],
                 [2,3,1],
+                [3,3,1],
+                [3,1,3],
+                [3,2,1],
             ]
 
-        if (total_matrix in green):
-            if total <= 0.1:
-                return 'green'
-            else:
-                return 'yellow'
-        elif (total_matrix in red):
-            return 'red'
+        if total_matrix in green:
+            risk_factor_by_matrix = 0
+        elif total_matrix in red:
+            risk_factor_by_matrix = 2
+        else:
+            risk_factor_by_matrix = 1
 
-        return 'yellow'
+        if total <= 0.10:
+            risk_factor_by_total = 0
+        elif total <= 0.30:
+            risk_factor_by_total = 1
+        else:
+            risk_factor_by_total = 2
+
+        risk_factor = max(risk_factor_by_matrix, risk_factor_by_total)
+        return ['green', 'yellow', 'red'][risk_factor]
         
 
     def get_day_plaque_index(self, percent):
