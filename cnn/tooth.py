@@ -84,6 +84,27 @@ def save_tooth_images(source_image, masks, rois):
         skimage.io.imsave(path, saved_image, compress_level=1)
         skimage.io.imsave(directory + "original.png", source_image, compress_level=1)
 
+def remove_false_braces(tooth_results, brace_results):
+    if tooth_results['masks'].shape[2] == 0:
+        return braces_results
+
+    tooth_areas = np.sum(tooth_results['masks'], axis=(0,1))
+    largest_tooth_area = np.max(tooth_areas)
+
+    true_braces_mask = np.sum(brace_results['masks'], axis=(0,1)) < largest_tooth_area
+    
+    result = {
+        'masks': brace_results['masks'][:,:,true_braces_mask],
+        'rois': brace_results['rois'][true_braces_mask],
+        # 'class_ids': ...
+        # 'scores': ...
+    }
+
+    if result['masks'].shape[2] != brace_results['masks'].shape[2]:
+        print("Removed some braces:", result['masks'].shape[2], brace_results['masks'].shape[2])
+        print("Removed some braces:", result['rois'].shape[0], brace_results['rois'].shape[0])
+
+    return result
 
 def cut_braces_from_teeth(tooth_masks, brace_masks):
     result = np.copy(tooth_masks)
@@ -178,10 +199,15 @@ def combine_pictures(image1, image2, image3, image4):
     result[image1.shape[0]:,image1.shape[1]:,:] = image4
     return result
 
+def draw_braces(image, masks):
+    image[np.any(masks, axis=2)] = (153, 255, 153)
+
 def make_test_collage(purity_class, image, tooth_result, brace_result, tooth_mask_cut,
                       with_braces_result, with_braces_plaque_images):
     with_braces_index = purity_class.get_purity_index(with_braces_result)
-    with_braces_image = make_test_collage_image(image, tooth_result['rois'],
+    with_braces_image = np.copy(image)
+    draw_braces(with_braces_image, brace_result['masks'])
+    with_braces_image = make_test_collage_image(with_braces_image, tooth_result['rois'],
                                                 with_braces_plaque_images,
                                                 index_total(with_braces_index),
                                                 with_braces_index)
@@ -209,6 +235,8 @@ def process_images(model, images, purity_class, inspect, make_test_image = False
         image = prepare_image(image)
         tooth_result = model['tooth'].detect([image], verbose=0)[0]
         brace_result = model['brace'].detect([image], verbose=0)[0]
+
+        brace_result = remove_false_braces(tooth_result, brace_result)
 
         if brace_result['masks'].shape[-1] >= 5:
             tooth_mask_cut, cut_area = cut_braces_from_teeth(tooth_result['masks'], brace_result['masks'])
