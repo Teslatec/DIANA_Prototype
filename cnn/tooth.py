@@ -86,7 +86,7 @@ def save_tooth_images(source_image, masks, rois):
 
 def remove_false_braces(tooth_results, brace_results):
     if tooth_results['masks'].shape[2] == 0:
-        return braces_results
+        return brace_results
 
     tooth_areas = np.sum(tooth_results['masks'], axis=(0,1))
     largest_tooth_area = np.max(tooth_areas)
