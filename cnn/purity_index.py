@@ -166,14 +166,19 @@ class PurityIndex:
 
 
     def get_purity_index(self, tooth_purty_pixel):
+        if tooth_purty_pixel['total'] != 0:
+            day_percentage = tooth_purty_pixel['s'] / tooth_purty_pixel['total']
+            week_percentage = tooth_purty_pixel['m'] / tooth_purty_pixel['total']
+            month_percentage = tooth_purty_pixel['h'] / tooth_purty_pixel['total']
+        else:
+            # Whatever
+            day_percentage = 0
+            week_percentage = 0
+            month_percentage = 0
+            
 
-        day_percentage = tooth_purty_pixel['s'] / tooth_purty_pixel['total']
         day_index = self.get_day_plaque_index(day_percentage)
-
-        week_percentage = tooth_purty_pixel['m'] / tooth_purty_pixel['total']
         week_index = self.get_week_plaque_index(week_percentage)
-
-        month_percentage = tooth_purty_pixel['h'] / tooth_purty_pixel['total']
         month_index = self.get_month_plaque_index(month_percentage)
 
         matrix = [month_index, week_index, day_index]

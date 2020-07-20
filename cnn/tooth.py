@@ -236,6 +236,10 @@ def process_images(model, images, purity_class, inspect, make_test_image = False
         tooth_result = model['tooth'].detect([image], verbose=0)[0]
         brace_result = model['brace'].detect([image], verbose=0)[0]
 
+        if tooth_result['masks'].shape[-1] == 0:
+            splashes.append(None)
+            continue
+
         brace_result = remove_false_braces(tooth_result, brace_result)
 
         if brace_result['masks'].shape[-1] >= 5:
@@ -295,11 +299,15 @@ def process_file_list(model, image_paths_in, image_paths_out,
         return None
 
     purity_class = PurityIndex(configuration)
+    image_paths_out_final = []
 
     splashes, dirtyness = process_images(model, images, purity_class, inspect, inspect)
     for splash, image_path_out in zip(splashes, image_paths_out):
+        if splash is None:
+            continue
         skimage.io.imsave(image_path_out, splash, compress_level=1)
-    return dirtyness
+        image_paths_out_final.append(image_path_out)
+    return dirtyness, image_paths_out_final
 
 def tooth_model_init(tooth_weights_path, brace_weights_path):
     # Configurations

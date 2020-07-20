@@ -36,8 +36,8 @@ def process_request(model, purity_config, workdir, json_object):
         filenames_in.append(filename)
         filenames_out.append(os.path.join(OUTPUT_DIR, filename_out))
 
-    purity_index = tooth.process_file_list(model, image_paths_in, image_paths_out,
-                                           purity_config)
+    purity_index, filenames_out = tooth.process_file_list(model, image_paths_in, image_paths_out,
+                                                          purity_config)
     result =  {
         "id": json_object["id"],
         "image": filenames_out,
