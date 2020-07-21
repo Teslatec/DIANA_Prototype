@@ -226,6 +226,35 @@ def make_test_collage(purity_class, image, tooth_result, brace_result, tooth_mas
                                                   old_algorithm_plaque, old_algorithm_dirtyness,
                                                   None)
     return combine_pictures(image, old_algorithm_image, no_braces_image, with_braces_image)
+
+def is_horizontally_oriented(tooth_rois):
+    num_excluded = 2
+
+    if tooth_rois.shape[0] >= 2*num_excluded:
+        # Filter teeth furthest from their center
+
+        s = np.sum(tooth_rois, axis=0)
+        count = tooth_rois.shape[0]
+        center = ((s[2] + s[0]) // (2 * count), (s[3] + s[1]) // (2 * count))
+        diffs = tooth_rois.reshape((tooth_rois.shape[0],2,2)) - center
+        diffs_sums = np.sum(diffs, axis=1)
+
+        # Manhattan metric
+        distances = np.sum(np.absolute(diffs_sums), axis=1)
+
+        indexes = np.argsort(distances)
+        indexes = indexes[num_excluded//2:-((num_excluded+1)//2)]
+
+        rois_filtered = tooth_rois[indexes]
+    else:
+        rois_filtered = tooth_rois
+    
+    rois_filtered = rois_filtered.reshape(2*rois_filtered.shape[0],2)
+    y1, x1 = np.min(rois_filtered, axis=0)
+    y2, x2 = np.max(rois_filtered, axis=0)
+    h = y2 - y1
+    w = x2 - x1
+    return w >= h
     
 def process_images(model, images, purity_class, inspect, make_test_image = False):
     splashes = []
@@ -239,6 +268,8 @@ def process_images(model, images, purity_class, inspect, make_test_image = False
         if tooth_result['masks'].shape[-1] == 0:
             splashes.append(None)
             continue
+
+        horizontal = is_horizontally_oriented(tooth_result['rois'])
 
         brace_result = remove_false_braces(tooth_result, brace_result)
 
@@ -255,8 +286,9 @@ def process_images(model, images, purity_class, inspect, make_test_image = False
         results.append(current_image_result)
 
         if not make_test_image:
-            splash = apply_color_splash(image, tooth_result['masks'],
-                                        tooth_result['rois'])
+            splash = apply_color_splash(image, tooth_result['masks'], tooth_result['rois'])
+            if not horizontal:
+                splash = np.rot90(splash, axes=(0,1))
         else:
             splash = make_test_collage(purity_class, image, tooth_result, brace_result,
                                        tooth_mask_cut, current_image_result,
