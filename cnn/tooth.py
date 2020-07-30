@@ -10,7 +10,8 @@ import os
 import sys
 import datetime
 
-# Used only for making test collages
+# Used for white balancing 
+# and making test collages
 import cv2
 
 def apply_color_splash(image, mask, rois):
@@ -29,12 +30,12 @@ def calculate_every_dirtyness(purity_class, image, masks, rois):
         results.append(result)
     return results
 
-def prepare_image(image):
+def prepare_image(image, white_balancer):
     result = {}
 
     #Resize the image to speed things up
     shape = image.shape
-    maxdim = max(shape)
+    maxdim = max(shape[0:2])
     if maxdim > 1024:
         factor = 1024.0 / float(maxdim)
         new_shape = (min(1024, int(factor * float(shape[0]))),
@@ -42,6 +43,11 @@ def prepare_image(image):
                      shape[2])
         image = skimage.transform.resize(image, new_shape)
         image = (image * 255.0).astype(np.uint8)
+    
+    cv2.cvtColor(image, cv2.COLOR_RGB2BGR, image)
+    white_balancer.balanceWhite(image, image)
+    cv2.cvtColor(image, cv2.COLOR_BGR2RGB, image)
+
     return image
 
 def filter_outliers(dirtyness_list, n_removed):
@@ -99,10 +105,6 @@ def remove_false_braces(tooth_results, brace_results):
         # 'class_ids': ...
         # 'scores': ...
     }
-
-    if result['masks'].shape[2] != brace_results['masks'].shape[2]:
-        print("Removed some braces:", result['masks'].shape[2], brace_results['masks'].shape[2])
-        print("Removed some braces:", result['rois'].shape[0], brace_results['rois'].shape[0])
 
     return result
 
@@ -261,11 +263,11 @@ def process_images(model, images, purity_class, inspect, make_test_image = False
     results = []
 
     for image in images:
-        image = prepare_image(image)
+        image = prepare_image(image, model['white_balancer'])
         tooth_result = model['tooth'].detect([image], verbose=0)[0]
         brace_result = model['brace'].detect([image], verbose=0)[0]
 
-        if tooth_result['masks'].shape[-1] == 0:
+        if tooth_result['masks'].shape[-1] <= 2:
             splashes.append(None)
             continue
 
@@ -368,5 +370,10 @@ def tooth_model_init(tooth_weights_path, brace_weights_path):
     print("Loading weights ", tooth_weights_path, brace_weights_path)
     tooth_model.load_weights(tooth_weights_path, by_name=True)
     brace_model.load_weights(brace_weights_path, by_name=True)
-    
-    return {'tooth': tooth_model, 'brace': brace_model}
+
+    white_balancer = cv2.xphoto.createGrayworldWB()
+    white_balancer.setSaturationThreshold(0.99)   
+
+    return {'tooth': tooth_model,
+            'brace': brace_model,
+            'white_balancer': white_balancer}
