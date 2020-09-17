@@ -29,7 +29,7 @@ RUN pip3 install --no-cache-dir \
                  pika
 
 ENV PYTHONPATH /usr/local/src/Mask_RCNN
-COPY tooth_weights.h5 brace_weights.h5 weights_md5.txt /app/
+COPY tooth_weights.h5 weights_md5.txt /app/
 RUN md5sum -c weights_md5.txt
 
 COPY tooth.py tooth_service.py purity_index.py tooth_cli.py /app/
