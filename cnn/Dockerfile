@@ -21,6 +21,7 @@ RUN pip3 install --no-cache-dir \
                  Keras-Applications==1.0.8 \
                  Keras-Preprocessing==1.1.0 \
                  opencv-python==4.2.0.34 \
+                 opencv-contrib-python==4.2.0.34 \
                  tensorflow==1.14 \
                  scikit-image==0.16.2 \
                  imantics==0.1.12 \
@@ -31,7 +32,7 @@ ENV PYTHONPATH /usr/local/src/Mask_RCNN
 COPY tooth_weights.h5 brace_weights.h5 weights_md5.txt /app/
 RUN md5sum -c weights_md5.txt
 
-COPY tooth.py tooth_service.py tooth_test.py purity_index.py tooth_cli.py /app/
+COPY tooth.py tooth_service.py purity_index.py tooth_cli.py /app/
 
 VOLUME /images
 VOLUME /app/config

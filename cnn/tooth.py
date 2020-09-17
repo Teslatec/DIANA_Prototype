@@ -44,9 +44,10 @@ def prepare_image(image, white_balancer):
         image = skimage.transform.resize(image, new_shape)
         image = (image * 255.0).astype(np.uint8)
     
-    cv2.cvtColor(image, cv2.COLOR_RGB2BGR, image)
-    white_balancer.balanceWhite(image, image)
-    cv2.cvtColor(image, cv2.COLOR_BGR2RGB, image)
+    if white_balancer is not None:
+        cv2.cvtColor(image, cv2.COLOR_RGB2BGR, image)
+        white_balancer.balanceWhite(image, image)
+        cv2.cvtColor(image, cv2.COLOR_BGR2RGB, image)
 
     return image
 
@@ -257,6 +258,14 @@ def is_horizontally_oriented(tooth_rois):
     h = y2 - y1
     w = x2 - x1
     return w >= h
+
+def split_detection_result(result, class_id):
+    print(result['class_ids'])
+    indexes = [i for i, c in enumerate(result['class_ids']) if c == class_id]
+    return {
+        'rois': result['rois'][indexes],
+        'masks': result['masks'][:,:,indexes]
+    }
     
 def process_images(model, images, purity_class, inspect, make_test_image = False):
     splashes = []
@@ -264,8 +273,9 @@ def process_images(model, images, purity_class, inspect, make_test_image = False
 
     for image in images:
         image = prepare_image(image, model['white_balancer'])
-        tooth_result = model['tooth'].detect([image], verbose=0)[0]
-        brace_result = model['brace'].detect([image], verbose=0)[0]
+        result = model['tooth'].detect([image], verbose=0)[0]
+        tooth_result = split_detection_result(result, 1)
+        brace_result = split_detection_result(result, 2)
 
         if tooth_result['masks'].shape[-1] <= 2:
             splashes.append(None)
@@ -343,7 +353,7 @@ def process_file_list(model, image_paths_in, image_paths_out,
         image_paths_out_final.append(image_path_out)
     return dirtyness, image_paths_out_final
 
-def tooth_model_init(tooth_weights_path, brace_weights_path):
+def tooth_model_init(tooth_weights_path, white_balance_enabled=False):
     # Configurations
     class ToothConfig(mrcnn.config.Config):
         # Set batch size to 1 since we'll be running inference on
@@ -351,29 +361,21 @@ def tooth_model_init(tooth_weights_path, brace_weights_path):
         NAME = "tooth"
         GPU_COUNT = 1
         IMAGES_PER_GPU = 1
-        NUM_CLASSES = 1 + 1  # Background + tooth
+        NUM_CLASSES = 1 + 2  # Background + tooth + brace
     tooth_config = ToothConfig()
 
-    class BraceConfig(mrcnn.config.Config):
-        NAME = "tooth"
-        GPU_COUNT = 1
-        IMAGES_PER_GPU = 1
-        NUM_CLASSES = 1 + 1 # Background + brace
-    brace_config = BraceConfig()
-
     tooth_model = mrcnn.model.MaskRCNN(mode="inference", config=tooth_config,
-                                       model_dir=".")
-    brace_model = mrcnn.model.MaskRCNN(mode="inference", config=brace_config,
                                        model_dir=".")
 
     # Load weights
     print("Loading weights ", tooth_weights_path, brace_weights_path)
     tooth_model.load_weights(tooth_weights_path, by_name=True)
-    brace_model.load_weights(brace_weights_path, by_name=True)
 
-    white_balancer = cv2.xphoto.createGrayworldWB()
-    white_balancer.setSaturationThreshold(0.99)   
+    if white_balance_enabled:
+        white_balancer = cv2.xphoto.createGrayworldWB()
+        white_balancer.setSaturationThreshold(0.99)   
+    else:
+        white_balancer = None
 
     return {'tooth': tooth_model,
-            'brace': brace_model,
             'white_balancer': white_balancer}
