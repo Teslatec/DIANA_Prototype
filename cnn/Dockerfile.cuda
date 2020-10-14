@@ -1,4 +1,4 @@
-FROM rocm/tensorflow:rocm3.1-tf1.15-python3
+FROM tensorflow/tensorflow:1.15.2-gpu-py3
 WORKDIR '/app'
 
 RUN apt-get update && apt-get install --no-install-recommends -y \

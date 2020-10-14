@@ -10,7 +10,7 @@ import os
 import sys
 import datetime
 
-# Used for white balancing 
+# Used for white balancing
 # and making test collages
 import cv2
 
@@ -43,7 +43,7 @@ def prepare_image(image, white_balancer):
                      shape[2])
         image = skimage.transform.resize(image, new_shape)
         image = (image * 255.0).astype(np.uint8)
-    
+
     if white_balancer is not None:
         cv2.cvtColor(image, cv2.COLOR_RGB2BGR, image)
         white_balancer.balanceWhite(image, image)
@@ -99,7 +99,7 @@ def remove_false_braces(tooth_results, brace_results):
     largest_tooth_area = np.max(tooth_areas)
 
     true_braces_mask = np.sum(brace_results['masks'], axis=(0,1)) < largest_tooth_area
-    
+
     result = {
         'masks': brace_results['masks'][:,:,true_braces_mask],
         'rois': brace_results['rois'][true_braces_mask],
@@ -179,7 +179,7 @@ def calculate_tooth_dirtyness_old(image, mask):
                 all_count += 1
             else:
                 splash[row, col] = (255, 255, 255)
-                
+
     return float(dirty_count) / float(all_count), splash
 
 def calculate_jaw_dirtyness_old(image, masks, rois):
@@ -251,7 +251,7 @@ def is_horizontally_oriented(tooth_rois):
         rois_filtered = tooth_rois[indexes]
     else:
         rois_filtered = tooth_rois
-    
+
     rois_filtered = rois_filtered.reshape(2*rois_filtered.shape[0],2)
     y1, x1 = np.min(rois_filtered, axis=0)
     y2, x2 = np.max(rois_filtered, axis=0)
@@ -266,14 +266,33 @@ def split_detection_result(result, class_id):
         'rois': result['rois'][indexes],
         'masks': result['masks'][:,:,indexes]
     }
-    
+
+def detection_generator(model, images):
+    tooth_model = model['tooth']
+    batch_size = tooth_model.config.GPU_COUNT * tooth_model.config.IMAGES_PER_GPU
+
+    num_batches = (len(images) + (batch_size - 1)) // batch_size
+
+    for batch in range(0, num_batches):
+        prepared_images = []
+        for image in images[batch_size * batch : batch_size * (batch + 1)]:
+            prepared_images.append(prepare_image(image, model['white_balancer']))
+
+        actual_batch_size = len(prepared_images)
+
+        # Fill the batch with the same image
+        for i in range(0, batch_size - actual_batch_size):
+            prepared_images.append(prepared_images[0])
+
+        results = model['tooth'].detect(prepared_images, verbose=0)
+        for prepared_image, result in zip(prepared_images[0:actual_batch_size], results[0: actual_batch_size]):
+            yield prepared_image, result
+
 def process_images(model, images, purity_class, inspect, make_test_image = False):
     splashes = []
     results = []
 
-    for image in images:
-        image = prepare_image(image, model['white_balancer'])
-        result = model['tooth'].detect([image], verbose=0)[0]
+    for image, result in detection_generator(model, images):
         tooth_result = split_detection_result(result, 1)
         brace_result = split_detection_result(result, 2)
 
@@ -360,7 +379,7 @@ def tooth_model_init(tooth_weights_path, white_balance_enabled=False):
         # one image at a time. Batch size = GPU_COUNT * IMAGES_PER_GPU
         NAME = "tooth"
         GPU_COUNT = 1
-        IMAGES_PER_GPU = 1
+        IMAGES_PER_GPU = 6
         NUM_CLASSES = 1 + 2  # Background + tooth + brace
     tooth_config = ToothConfig()
 
@@ -368,12 +387,12 @@ def tooth_model_init(tooth_weights_path, white_balance_enabled=False):
                                        model_dir=".")
 
     # Load weights
-    print("Loading weights ", tooth_weights_path, brace_weights_path)
+    print("Loading weights ", tooth_weights_path)
     tooth_model.load_weights(tooth_weights_path, by_name=True)
 
     if white_balance_enabled:
         white_balancer = cv2.xphoto.createGrayworldWB()
-        white_balancer.setSaturationThreshold(0.99)   
+        white_balancer.setSaturationThreshold(0.99)
     else:
         white_balancer = None
 
