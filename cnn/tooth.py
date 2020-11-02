@@ -1,3 +1,4 @@
+import tensorflow as tf
 import mrcnn.model
 import mrcnn.config
 import mrcnn.visualize
@@ -373,13 +374,19 @@ def process_file_list(model, image_paths_in, image_paths_out,
     return dirtyness, image_paths_out_final
 
 def tooth_model_init(tooth_weights_path, white_balance_enabled=False):
+    import tensorflow as tf
+    from keras.backend.tensorflow_backend import set_session
+    config = tf.ConfigProto()
+    config.gpu_options.per_process_gpu_memory_fraction = 0.5
+    set_session(tf.Session(config=config))
+
     # Configurations
     class ToothConfig(mrcnn.config.Config):
         # Set batch size to 1 since we'll be running inference on
         # one image at a time. Batch size = GPU_COUNT * IMAGES_PER_GPU
         NAME = "tooth"
         GPU_COUNT = 1
-        IMAGES_PER_GPU = 6
+        IMAGES_PER_GPU = 3
         NUM_CLASSES = 1 + 2  # Background + tooth + brace
     tooth_config = ToothConfig()
 
